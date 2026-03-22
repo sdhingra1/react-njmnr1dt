@@ -46,6 +46,20 @@ try {
   console.error("Firebase config missing or invalid", e);
 }
 
+// Fallback ID generator if Firebase Auth is disabled
+const getLocalUid = () => {
+  try {
+    let uid = localStorage.getItem('mera_sach_uid');
+    if (!uid) {
+      uid = 'anon_' + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('mera_sach_uid', uid);
+    }
+    return uid;
+  } catch (e) {
+    return 'anon_temp_id';
+  }
+};
+
 // --------------------------------------------------------
 // LOCAL DATABASE (IndexedDB) FOR GUARANTEED PERMANENCE
 // --------------------------------------------------------
@@ -651,7 +665,9 @@ const App = () => {
 
   // 2. Fetch recordings AND ratings from Firebase Firestore
   useEffect(() => {
-    if (!user || !db || !appId) return;
+    if (!db || !appId) return; 
+
+    const activeUid = user ? user.uid : getLocalUid();
 
     // AUDIO
     const recordingsRef = collection(db, 'mera_sach_audio');
@@ -685,7 +701,7 @@ const App = () => {
           if (typeof starVal === 'number') {
             totalStars += starVal;
             count++;
-            if (uid === user.uid) currentUserRating = starVal;
+            if (uid === activeUid) currentUserRating = starVal;
           }
         }
         
@@ -773,20 +789,21 @@ const App = () => {
   };
 
   const handleRate = async (starValue) => {
-    if (!user || !db || !appId) {
-      setMicError("You must wait to be connected to the cloud to rate.");
+    if (!db || !appId) {
+      setMicError("Database connection is missing. Please check your config.");
       setTimeout(() => setMicError(null), 3000);
       return;
     }
     try {
+      const activeUid = user ? user.uid : getLocalUid();
       const docRef = doc(db, 'mera_sach_ratings', `poem_${selectedPoemIndex}`);
       // Use { merge: true } so we don't accidentally overwrite ratings from other users!
-      await setDoc(docRef, { [user.uid]: starValue }, { merge: true });
+      await setDoc(docRef, { [activeUid]: starValue }, { merge: true });
       setSuccessMsg("Rating saved successfully!");
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch (error) {
       console.error("Rating error:", error);
-      setMicError("Failed to save rating.");
+      setMicError("Failed to save rating. Ensure database is in test mode.");
       setTimeout(() => setMicError(null), 3000);
     }
   };
@@ -839,7 +856,7 @@ const App = () => {
                 await saveAudioDB(selectedPoemIndex, base64data, blobType);
               } catch(e) { console.error("Local DB error:", e); }
 
-              if (user && db && appId) {
+              if (db && appId) {
                  try {
                      const docRef = doc(db, 'mera_sach_audio', `poem_${selectedPoemIndex}`);
                      await setDoc(docRef, {
@@ -892,7 +909,7 @@ const App = () => {
     try {
       await deleteAudioDB(selectedPoemIndex);
       setRecordings(p => { const n={...p}; delete n[selectedPoemIndex]; return n; });
-      if (user && db && appId) {
+      if (db && appId) {
         await deleteDoc(doc(db, 'mera_sach_audio', `poem_${selectedPoemIndex}`));
       } 
     } catch (e) {
