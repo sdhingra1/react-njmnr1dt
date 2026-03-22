@@ -316,7 +316,7 @@ const poems = [
     title: "शौक़",
     titleTrans: "Shauq",
     titleEn: "Desire",
-    content: "ख़्वाबों की लहद पर चल कर\nदिल ने ढ़ोया है भार जीने का\nकह भी देती जुबां तो क्या होता\nशौक़ है दर्द- -जाम पीने का",
+    content: "ख़्वाबों की लहद पर चल कर\nदिल ने ढ़ोया है কুল भार जीने का\nकह भी देती जुबां तो क्या होता\nशौक़ है दर्द- -जाम पीने का",
     contentTrans: "Khwaabon ki lahad par chal kar\nDil ne dhoya hai bhaar jeene ka\nKeh bhi deti zuban toh kya hota\nShauq hai dard-e-jaam peene ka",
     contentEn: "Walking on the grave of dreams\nThe heart has carried the burden of living\nEven if the tongue had spoken, what would happen\nThere is a desire to drink the cup of pain",
     tags: ["शौक़", "दर्द"],
@@ -689,6 +689,11 @@ const App = () => {
     const ratingsRef = collection(db, 'mera_sach_ratings');
     const unsubRatings = onSnapshot(ratingsRef, (snapshot) => {
       const newRatings = {};
+      
+      // Pull local ratings to merge with cloud just in case
+      const localRatingsRaw = localStorage.getItem('mera_sach_local_ratings');
+      const localRatings = localRatingsRaw ? JSON.parse(localRatingsRaw) : {};
+
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data();
         const poemIndex = parseInt(docSnap.id.replace('poem_', ''), 10);
@@ -705,14 +710,42 @@ const App = () => {
           }
         }
         
+        // Merge with local if cloud doesn't have the user's rating yet
+        if (!currentUserRating && localRatings[poemIndex]) {
+            currentUserRating = localRatings[poemIndex];
+            totalStars += currentUserRating;
+            count++;
+        }
+        
         newRatings[poemIndex] = {
           avg: count > 0 ? totalStars / count : 0,
           count: count,
           userRating: currentUserRating
         };
       });
+
+      // Inject any purely local ratings that haven't made it to the cloud yet
+      for (const [idxStr, starVal] of Object.entries(localRatings)) {
+        const idx = parseInt(idxStr, 10);
+        if (!newRatings[idx]) {
+           newRatings[idx] = { avg: starVal, count: 1, userRating: starVal };
+        }
+      }
+
       setRatings(newRatings);
-    }, (error) => console.error("Firestore rating sub error:", error));
+    }, (error) => {
+      console.error("Firestore rating sub error:", error);
+      // Fallback to pure local ratings if Firestore is denied
+      const localRatingsRaw = localStorage.getItem('mera_sach_local_ratings');
+      if (localRatingsRaw) {
+          const localRatings = JSON.parse(localRatingsRaw);
+          const fallbackRatings = {};
+          for (const [idxStr, starVal] of Object.entries(localRatings)) {
+              fallbackRatings[parseInt(idxStr, 10)] = { avg: starVal, count: 1, userRating: starVal };
+          }
+          setRatings(prev => ({ ...fallbackRatings, ...prev }));
+      }
+    });
 
     return () => {
       unsubAudio();
@@ -789,22 +822,44 @@ const App = () => {
   };
 
   const handleRate = async (starValue) => {
-    if (!db || !appId) {
-      setMicError("Database connection is missing. Please check your config.");
-      setTimeout(() => setMicError(null), 3000);
-      return;
-    }
+    const activeUid = user ? user.uid : getLocalUid();
+
+    // 1. Immediately Save Locally (Optimistic Update)
     try {
-      const activeUid = user ? user.uid : getLocalUid();
-      const docRef = doc(db, 'mera_sach_ratings', `poem_${selectedPoemIndex}`);
-      // Use { merge: true } so we don't accidentally overwrite ratings from other users!
-      await setDoc(docRef, { [activeUid]: starValue }, { merge: true });
-      setSuccessMsg("Rating saved successfully!");
+      const localRatings = JSON.parse(localStorage.getItem('mera_sach_local_ratings') || '{}');
+      localRatings[selectedPoemIndex] = starValue;
+      localStorage.setItem('mera_sach_local_ratings', JSON.stringify(localRatings));
+      
+      setRatings(prev => {
+        const existing = prev[selectedPoemIndex] || { avg: 0, count: 0 };
+        return {
+          ...prev,
+          [selectedPoemIndex]: { 
+             ...existing, 
+             userRating: starValue,
+             // Temporarily spoof the average for the UI if it's the first rating
+             avg: existing.count === 0 ? starValue : existing.avg,
+             count: existing.count === 0 ? 1 : existing.count
+          }
+        };
+      });
+      setSuccessMsg("Rating saved!");
       setTimeout(() => setSuccessMsg(null), 3000);
-    } catch (error) {
-      console.error("Rating error:", error);
-      setMicError("Failed to save rating. Ensure database is in test mode.");
-      setTimeout(() => setMicError(null), 3000);
+    } catch(e) {
+      console.error("Local storage rating failed", e);
+    }
+
+    // 2. Attempt to Sync to Cloud
+    if (db && appId) {
+      try {
+        const docRef = doc(db, 'mera_sach_ratings', `poem_${selectedPoemIndex}`);
+        // Use { merge: true } so we don't accidentally overwrite ratings from other users
+        await setDoc(docRef, { [activeUid]: starValue }, { merge: true });
+      } catch (error) {
+        console.error("Rating cloud sync error:", error);
+        setMicError("Saved locally (Cloud blocked. Check Firebase Rules).");
+        setTimeout(() => setMicError(null), 4000);
+      }
     }
   };
 
