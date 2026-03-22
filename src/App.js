@@ -561,7 +561,7 @@ const poems = [
     title: "फिर वही मोड़",
     titleTrans: "Phir Wahi Mod",
     titleEn: "That Same Turn Again",
-    content: "फिर वही मोड़ नज़र आता है -\nज़िंदगी गोल है ज़मीं की तरह\nऔर भी मोड़ हैं उस मोड़ के पार\n\nमंजिलें राह तकती हैं कई\nचाहतें तलाशती हैं कई\nचाँद कुछ और हसीं है शायद\nमौसम और भी रंगीं है शायद\nऔर भी राहतें हैं उस मोड़ के पार\n\nमुड़ ही जाऊंगा इस बार\nपहले भी यही सोचा था\nरोके ना रुकंगा इस बार\nपहले भी यही सोचा था\n\nजुल्फें, दामन, रिश्ते, माज़ी\nछौड़ के सब को बढ़ जाऊंगा\nहाँ- पहले भी यही सोचा था\n\nफिर वही मोड़ नज़र आता है\nवही दिल की हालत है फिर से\nज़ुल्फ़ लहराने लगी है फिर से\nरोकती है कशिश रिश्तों की\n\nकोई आवाज़ खींचती है फिर से\nरुक जाऊं, गुज़र जाऊं या मुड़ जाऊं\nसवाल आन खडा है फिर से\nघूमता है ख्याल दिल में फिर से\nज़िंदगी गोल है ज़मीन की तरह",
+    content: "फिर वही मोड़ नज़र आता है -\nज़िंदगी गोल है ज़मीं की तरह\nऔर भी मोड़ हैं उस मोड़ के पार\n\nमंजिलें राह तकती हैं कई\nचाहतें तलाशती हैं कई\nचाँद कुछ और हसीं है शायद\nमौसम और भी रंगीं है शायद\nऔर भी राहतें हैं उस मोड़ के पार\n\nमुड़ ही जाऊंगा इस बार\nपहले भी यही सोचा था\nरोके ना रुकंगा इस बार\nपहले भी यही सोचा था\n\nजुल्फें, दामन, रिश्ते, माज़ी\nछौड़ के सब को बढ़ जाऊंगा\nहाँ- पहले भी起 यही सोचा था\n\nफिर वही मोड़ नज़र आता है\nवही दिल की हालत है फिर से\nज़ुल्फ़ लहराने लगी है फिर से\nरोकती है कशिश रिश्तों की\n\nकोई आवाज़ खींचती है फिर से\nरुक जाऊं, गुज़र जाऊं या मुड़ जाऊं\nसवाल आन खडा है फिर से\nघूमता है ख्याल दिल में फिर से\nज़िंदगी गोल है ज़मीन की तरह",
     contentTrans: "Phir wahi mod nazar aata hai -\nZindagi gol hai zameen ki tarah\nAur bhi mod hain us mod ke paar\n\nManzilein raah takti hain kai\nChahtein talashti hain kai\nChaand kuchh aur haseen hai shayad\nMausam aur bhi rangeen hai shayad\nAur bhi rahatein hain us mod ke paar\n\nMud hi jaunga is baar\nPehle bhi yahi socha tha\nRoke na rukoonga is baar\nPehle bhi yahi socha tha\n\nZulfein, daaman, rishte, maazi\nChhod ke sab ko badh jaunga\nHaan- pehle bhi yahi socha tha\n\nPhir wahi mod nazar aata hai\nWahi dil ki haalat hai phir se\nZulf lehrane lagi hai phir se\nRokti hai kashish rishton ki\n\nKoi awaaz kheenchti hai phir se\nRuk jaoon, guzar jaoon ya mud jaoon\nSawaal aan khada hai phir se\nGhoomta hai khayal dil mein phir se\nZindagi gol hai zameen ki tarah",
     contentEn: "Then that same turn comes into view -\nLife is round like the earth\nThere are more turns beyond that turn\n\nMany destinations watch the path\nMany desires are searching\nThe moon is perhaps a bit more beautiful\nThe weather is perhaps a bit more colorful\nThere are more comforts beyond that turn\n\nI will definitely turn this time\nI had thought this before too\nI won't stop even if stopped this time\nI had thought this before too\n\nTresses, embraces, relationships, the past\nLeaving everyone behind I will move forward\nYes- I had thought this before too\n\nThen that same turn comes into view\nThat same condition of the heart is back again\nThe tresses have started swaying again\nThe pull of relationships stops me\n\nSome voice pulls me again\nShould I stop, pass by, or turn\nThe question stands before me again\nThe thought spins in the heart again\nLife is round like the earth",
     tags: ["सफ़र", "ज़िंदगी"],
@@ -590,8 +590,14 @@ const App = () => {
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
 
-  // Fallback: Inject Tailwind CSS if the host environment missed it.
   useEffect(() => {
+    // Ensure Tailwind uses class-based dark mode to match the preview environment exactly
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+      darkMode: 'class'
+    };
+
+    // Fallback: Inject Tailwind CSS if the host environment missed it.
     if (!document.querySelector('script[src*="tailwindcss"]')) {
       const script = document.createElement('script');
       script.src = "https://cdn.tailwindcss.com";
@@ -852,7 +858,7 @@ const App = () => {
                          currentPoem.content;
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
 
       {/* Header for Mobile */}
       <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between p-4 bg-inherit border-b border-slate-200 dark:border-slate-800 backdrop-blur-md">
