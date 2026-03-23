@@ -19,15 +19,12 @@ import {
   Sparkles,
   Loader2,
   ChevronUp,
-  ChevronDown,
-  MessageSquare,
-  Send,
-  User
+  ChevronDown
 } from 'lucide-react';
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, arrayUnion } from 'firebase/firestore';
 
 // --------------------------------------------------------
 // USER'S FIREBASE CONFIGURATION
@@ -364,7 +361,7 @@ const INITIAL_POEMS = [
     titleTrans: "Shabd",
     titleEn: "Words",
     content: "तुम्हारे शब्दों के जाल में\nअक्सर उलझा है अहसास मेरा\nशब्दों के अस्त्र से\nआहत भी हुआ हूँ\n\nपर शब्दों के अंकुश मैंने भी चुभोये हैं\nदर्द शब्दों से और निशब्द\nमैंने भी दिया है तुमको\n\nजिनसे शुरू की थी हमने मंजिलें सारी\nअब वहीं शब्द फिर से दोहराने होंगे\nशब्द जो पहचानते हैं रंजिशें सारी\nशब्द सुकून के फिर आजमाने होंगे\n\nक्या फिर शब्द उठा पायेंगे?\nमाज़ी का बोझ कहीं ज्यादा तो नहीं ?\nमेरी जुर्रत और तेरी जरूरत के लिए\nशब्द ये बेहद सादा तो नहीं ?\n\nया कोई बहकता हुआ शब्द\nकिसी ख़याल की उंगली थामे\nकिसी पुराने ज़ख्म को साथ लिए\n\nफैल जाएगा कोशिश भरे शब्दों पर\nकिसी बादल, किसी धुएं की तरह\n\nऔर फिर एक नया सफ़र शुरू होगा- शब्दों के बिना -- तनहा ?",
-    contentTrans: "Tumhare shabdon ke jaal mein\nAksar uljha hai ahsaas mera\nShabdon ke astra se\nAahat bhi hua hoon\n\nPar shabdon ke ankush maine bhi chubhoye hain\nDard shabdon se aur nishabd\nMaine bhi diya hai tumko\n\nJinse shuru ki thi humne manzilein saari\nAb wahi shabd phir se dohrane honge\nShabd jo pehchante hain ranjishein saari\nShabd sukoon ke phir aazmane honge\n\nKya phir shabd utha paayenge?\nMaazi ka bojh kahin zyada toh nahin?\nMeri jurrat aur teri zaroorat ke liye\nShabd ye behad saada toh nahin?\n\nYa koi बहकता hua shabd\nKisi khayal ki ungli thaame\nKisi purane zakhm ko saath liye\n\nPhail jayega koshish bhare shabdon par\nKisi badal, kisi dhuen ki tarah\n\nAur phir ek naya safar shuru hoga- shabdon ke bina -- tanha?",
+    contentTrans: "Tumhare shabdon ke jaal mein\nAksar uljha hai ahsaas mera\nShabdon ke astra se\nAahat bhi hua hoon\n\nPar shabdon ke ankush maine bhi chubhoye hain\nDard shabdon se aur nishabd\nMaine bhi diya hai tumko\n\nJinse shuru ki thi humne manzilein saari\nAb wahi shabd phir se dohrane honge\nShabd jo pehchante hain ranjishein saari\nShabd sukoon ke phir aazmane honge\n\nKya phir shabd utha paayenge?\nMaazi ka bojh kahin zyada toh nahin?\nMeri jurrat aur teri zaroorat ke liye\nShabd ye behad saada toh nahin?\n\nYa koi behakta hua shabd\nKisi khayal ki ungli thaame\nKisi purane zakhm ko saath liye\n\nPhail jayega koshish bhare shabdon par\nKisi badal, kisi dhuen ki tarah\n\nAur phir ek naya safar shuru hoga- shabdon ke bina -- tanha?",
     contentEn: "In the web of your words\nMy feelings have often tangled\nBy the weapon of words\nI have also been hurt\n\nBut I have also pierced with the goad of words\nPain through words and without words\nI have also given to you\n\nThe ones with which we started all our journeys\nNow those same words will have to be repeated\nThe words that recognize all grievances\nWords of comfort will have to be tried again\n\nWill we be able to pick up words again?\nIs the burden of the past not too much?\nFor my daring and your need\nAre these words not too simple?\n\nOr some wandering word\nHolding the finger of a thought\nTaking an old wound along\n\nWill spread over the attempt-filled words\nLike a cloud, like smoke\n\nAnd then a new journey will begin- without words -- lonely?",
     tags: ["शब्द", "सत्य"],
     artworkTheme: "tangle"
@@ -606,10 +603,6 @@ const App = () => {
   const [recordings, setRecordings] = useState({});
   const [ratings, setRatings] = useState({});
   
-  // NEW: Comments state
-  const [comments, setComments] = useState({});
-  const [newCommentText, setNewCommentText] = useState('');
-
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [micError, setMicError] = useState(null);
@@ -630,6 +623,11 @@ const App = () => {
     artworkTheme: 'barren'
   });
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isSuggestingLine, setIsSuggestingLine] = useState(false);
+  
+  // AI Analysis state
+  const [poemAnalysis, setPoemAnalysis] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   // NEW: Admin state to hide/show edit features
   const [isAdmin, setIsAdmin] = useState(false);
@@ -684,11 +682,6 @@ const App = () => {
     const unsubscribe = onAuthStateChanged(auth, setUser);
     return () => unsubscribe();
   }, []);
-
-  // Clear comment box when poem changes
-  useEffect(() => {
-    setNewCommentText('');
-  }, [selectedPoemId]);
 
   // 1. Load recordings from Local DB (IndexedDB)
   useEffect(() => {
@@ -799,17 +792,6 @@ const App = () => {
       }
     });
 
-    // COMMENTS
-    const commentsRef = collection(db, 'mera_sach_comments');
-    const unsubComments = onSnapshot(commentsRef, (snapshot) => {
-      const newComments = {};
-      snapshot.docs.forEach(docSnap => {
-        const rawId = docSnap.id.replace('poem_', '');
-        newComments[rawId] = docSnap.data().comments || [];
-      });
-      setComments(newComments);
-    }, (error) => console.error("Firestore comments sub error:", error));
-
     // CUSTOM POEMS
     const poemsRef = collection(db, 'mera_sach_custom_poems');
     const unsubPoems = onSnapshot(poemsRef, (snapshot) => {
@@ -825,7 +807,6 @@ const App = () => {
       unsubSettings();
       unsubAudio();
       unsubRatings();
-      unsubComments();
       unsubPoems();
     };
   }, [user]);
@@ -1055,6 +1036,16 @@ const App = () => {
     }
   };
 
+  const handlePoemSelect = (stableId) => {
+    if (isRecording) stopRecording();
+    setSelectedPoemId(stableId);
+    setLanguageMode('hi');
+    setMicError(null);
+    setSuccessMsg(null);
+    setPoemAnalysis(null); // Reset AI analysis when switching poems
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+  };
+
   const autoTranslatePoem = async () => {
     const inputTitle = newPoem.title || newPoem.titleTrans || newPoem.titleEn || "";
     const inputContent = newPoem.content || newPoem.contentTrans || newPoem.contentEn || "";
@@ -1131,20 +1122,6 @@ const App = () => {
     }
   };
 
-
-  const toggleFavorite = (stableId) => {
-    setFavorites(prev => prev.includes(stableId) ? prev.filter(i => i !== stableId) : [...prev, stableId]);
-  };
-
-  const handlePoemSelect = (stableId) => {
-    if (isRecording) stopRecording();
-    setSelectedPoemId(stableId);
-    setLanguageMode('hi');
-    setMicError(null);
-    setSuccessMsg(null);
-    if (window.innerWidth < 1024) setIsSidebarOpen(false);
-  };
-
   const handleRate = async (starValue) => {
     const activeUid = user ? user.uid : getLocalUid();
 
@@ -1178,4 +1155,619 @@ const App = () => {
       } catch (error) {
         console.error("Rating cloud sync error:", error);
         setMicError("Saved locally (Cloud blocked. Check Firebase Rules).");
-        setTimeout(()
+        setTimeout(() => setMicError(null), 4000);
+      }
+    }
+  };
+
+  const analyzePoem = async () => {
+    if (poemAnalysis) return; 
+    setIsAnalyzing(true);
+    setMicError(null);
+
+    try {
+      const apiKey = "";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+      const systemPrompt = "You are a deeply empathetic literary critic and poet. Your task is to analyze the given Hindi poem. Provide a beautiful, 2-3 paragraph explanation of its core meaning, emotional depth, and underlying metaphors. Speak directly to the reader in a warm, insightful tone in English. Keep it concise but profound.";
+      const userQuery = `Title: ${currentPoem.title}\n\nContent:\n${currentPoem.content}`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      const delays = [1000, 2000, 4000, 8000, 16000];
+      let data;
+      for (let i = 0; i <= 5; i++) {
+        try {
+          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          data = await response.json();
+          break;
+        } catch (error) {
+          if (i === 5) throw error;
+          await new Promise(resolve => setTimeout(resolve, delays[i]));
+        }
+      }
+
+      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (textData) {
+        setPoemAnalysis(textData);
+      }
+    } catch (err) {
+      console.error(err);
+      setMicError("Failed to analyze the poem. Please try again.");
+      setTimeout(() => setMicError(null), 3000);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const suggestNextLine = async () => {
+    if (!newPoem.content) {
+      setMicError("Please start writing your poem first before asking for a suggestion.");
+      setTimeout(() => setMicError(null), 3000);
+      return;
+    }
+    setIsSuggestingLine(true);
+    try {
+      const apiKey = "";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      const prompt = `You are a poetic muse helping a writer. Read what they have written so far in this Hindi poem, and elegantly suggest the next 1-2 lines to continue the thought, rhythm, and emotion. ONLY output the suggested lines in Devanagari script, nothing else.\n\nPoem so far:\n${newPoem.content}`;
+
+      const payload = { contents: [{ parts: [{ text: prompt }] }] };
+      const delays = [1000, 2000, 4000, 8000, 16000];
+      let data;
+      for (let i = 0; i <= 5; i++) {
+        try {
+          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          data = await response.json();
+          break;
+        } catch (error) {
+          if (i === 5) throw error;
+          await new Promise(resolve => setTimeout(resolve, delays[i]));
+        }
+      }
+
+      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (textData) {
+         setNewPoem(prev => ({ ...prev, content: prev.content + (prev.content.endsWith("\n") ? "" : "\n") + textData.trim() }));
+         setSuccessMsg("✨ Next line suggested!");
+         setTimeout(() => setSuccessMsg(null), 3000);
+      }
+    } catch(e) {
+      console.error(e);
+      setMicError("Failed to get suggestion.");
+      setTimeout(() => setMicError(null), 3000);
+    } finally {
+      setIsSuggestingLine(false);
+    }
+  };
+
+  const startRecording = async () => {
+    setMicError(null);
+    setSuccessMsg(null);
+    audioChunksRef.current = [];
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Your browser does not support voice recording.");
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg', 'audio/wav'];
+      const mimeType = types.find(type => MediaRecorder.isTypeSupported(type)) || '';
+
+      let recorder;
+      try {
+        recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 16000 });
+      } catch (e) {
+        recorder = new MediaRecorder(stream); 
+      }
+      mediaRecorderRef.current = recorder;
+      
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        if (audioChunksRef.current.length > 0) {
+          const blobType = mediaRecorderRef.current.mimeType;
+          const audioBlob = new Blob(audioChunksRef.current, { type: blobType });
+          
+          try {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+              const base64data = reader.result;
+
+              setRecordings(prev => ({ 
+                ...prev, 
+                [selectedPoemId]: { url: base64data, type: blobType.includes('video') ? 'video' : 'audio', label: 'Local' } 
+              }));
+
+              try {
+                await saveAudioDB(selectedPoemId, base64data, blobType);
+              } catch(e) { console.error("Local DB error:", e); }
+
+              if (db && appId) {
+                 try {
+                     const docRef = doc(db, 'mera_sach_audio', `poem_${selectedPoemId}`);
+                     await setDoc(docRef, {
+                       audioBase64: base64data,
+                       mimeType: blobType,
+                       updatedAt: Date.now()
+                     });
+                     setSuccessMsg("Cloud saved successfully!");
+                 } catch (uploadError) {
+                     if (uploadError.code === 'resource-exhausted') {
+                         setSuccessMsg("Saved locally! (File too big for cloud limit)");
+                     } else {
+                         setSuccessMsg("Saved locally! (Cloud unavailable)");
+                     }
+                 }
+              } else {
+                 setSuccessMsg("Saved successfully (Local)!");
+              }
+              setTimeout(() => setSuccessMsg(null), 3000);
+            };
+            reader.readAsDataURL(audioBlob);
+
+          } catch (e) {
+            setMicError("Failed to process recording.");
+          }
+        } else {
+          setMicError("No audio was captured. Please try recording again.");
+        }
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorderRef.current.start(100);
+      setIsRecording(true);
+      setRecordingTime(0);
+      timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
+    } catch (err) {
+      setMicError("Microphone error. Ensure you have granted permission in your browser settings.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      clearInterval(timerRef.current);
+    }
+  };
+
+  const handleDeleteRecording = async () => {
+    try {
+      await deleteAudioDB(selectedPoemId);
+      setRecordings(p => { const n={...p}; delete n[selectedPoemId]; return n; });
+      if (db && appId) {
+        await deleteDoc(doc(db, 'mera_sach_audio', `poem_${selectedPoemId}`));
+      } 
+    } catch (e) {
+      console.error("Failed to delete recording", e);
+    }
+  };
+
+  const formatTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2, '0')}`;
+
+  const currentPoem = allPoems.find(p => p.stableId === selectedPoemId) || allPoems[0] || { title: "No Poems Left", content: "All poems deleted.", stableId: 'empty' };
+  const currentMedia = recordings[selectedPoemId];
+  const currentRating = ratings[selectedPoemId];
+
+  const displayTitle = languageMode === 'en' ? (currentPoem.titleEn || currentPoem.title) : 
+                       languageMode === 'ro' ? (currentPoem.titleTrans || currentPoem.title) : 
+                       currentPoem.title;
+  
+  const displayContent = languageMode === 'en' ? (currentPoem.contentEn || currentPoem.content) : 
+                         languageMode === 'ro' ? (currentPoem.contentTrans || currentPoem.content) : 
+                         currentPoem.content;
+
+  return (
+    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+
+      {/* Header for Mobile */}
+      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between p-4 bg-inherit border-b border-slate-200 dark:border-slate-800 backdrop-blur-md">
+        <button onClick={() => setIsSidebarOpen(true)} className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg font-bold transition-transform active:scale-95">
+          <Menu size={20} />
+          <span className="text-sm">Poem List</span>
+        </button>
+        <button onClick={() => setDarkMode(!darkMode)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg">{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button>
+      </header>
+
+      {isSidebarOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setIsSidebarOpen(false)} />}
+
+      {/* Sidebar Navigation */}
+      <aside className={`fixed top-0 left-0 z-50 h-full w-80 transform transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 shadow-xl lg:shadow-none`}>
+        <div className="flex flex-col h-full">
+          <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between gap-2 mb-6">
+              <div className="flex items-center gap-2">
+                <BookOpen className="text-red-500" />
+                <h1 className="text-2xl font-bold tracking-tight">मेरा सच</h1>
+              </div>
+              <button className="lg:hidden p-2 text-slate-400" onClick={() => setIsSidebarOpen(false)}><X size={20}/></button>
+            </div>
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input type="text" placeholder="खोजें (Search...)" className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-900 rounded-xl text-sm outline-none transition-all focus:ring-1 focus:ring-red-400" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+            {isAdmin && (
+              <button onClick={() => { setEditingPoemId(null); setIsAddModalOpen(true); }} className="w-full py-2 mb-2 bg-slate-800 dark:bg-slate-700 text-white rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors flex justify-center items-center gap-2">
+                <span className="text-lg leading-none mt-[-2px]">+</span> Upload New Poem
+              </button>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+            {filteredPoems.map((p) => {
+                const idx = p.stableId;
+                const absoluteIndex = sortedPoems.findIndex(sp => sp.stableId === idx) + 1;
+                return (
+                    <button key={idx} onClick={() => handlePoemSelect(idx)} className={`w-full text-left p-4 rounded-xl flex justify-between items-center transition-all ${selectedPoemId === idx ? 'bg-red-50 dark:bg-red-950/30 text-red-600' : 'hover:bg-slate-100 dark:hover:bg-slate-900'}`}>
+                        <div className="flex flex-col max-w-[80%]">
+                           <span className="font-medium truncate">{absoluteIndex}. {languageMode === 'hi' ? p.title : (p.titleTrans || p.title)}</span>
+                           {ratings[idx]?.avg > 0 && (
+                             <span className="text-[10px] text-yellow-500 font-bold flex items-center mt-1">
+                               <Star size={10} fill="currentColor" className="mr-1"/> {ratings[idx].avg.toFixed(1)}
+                             </span>
+                           )}
+                        </div>
+                        {recordings[idx] && <Cloud size={14} className="text-blue-500 shrink-0 ml-2" />}
+                    </button>
+                );
+            })}
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="lg:ml-80 min-h-screen flex flex-col items-center p-4 lg:p-12 transition-all">
+        <div className="hidden lg:flex w-full max-w-2xl justify-end mb-6">
+          <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full hover:scale-110 transition-transform">{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button>
+        </div>
+
+        <article className="max-w-3xl w-full bg-white dark:bg-slate-800/40 p-8 lg:p-16 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 relative overflow-hidden group">
+          
+          {/* BACKGROUND GRAPHIC */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+            <div className="w-[80%] h-[60%] transform transition-transform duration-1000 group-hover:scale-105">
+                <PoemGraphic theme={currentPoem.artworkTheme} darkMode={darkMode} />
+            </div>
+          </div>
+
+          {/* Foreground Content */}
+          <div className="relative z-10">
+            {/* FLOATING RECORDING BAR */}
+            {isRecording && (
+                <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-red-200 dark:border-red-900/30 flex items-center gap-6 animate-in slide-in-from-top-4 duration-300 ring-2 ring-red-500/20">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+                        <span className="text-red-500 font-bold font-mono tracking-tighter text-lg">{formatTime(recordingTime)}</span>
+                    </div>
+                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
+                    <button onClick={stopRecording} className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors font-bold uppercase text-xs tracking-widest">
+                        <Square size={20} fill="currentColor" />
+                        STOP
+                    </button>
+                </div>
+            )}
+
+            <div className="w-full flex flex-col items-center mb-10 text-center">
+                
+                {/* NOTIFICATIONS */}
+                {micError && (
+                  <div className="w-full mb-6 bg-red-50 dark:bg-red-900/30 p-4 rounded-2xl flex items-center justify-between gap-3 border border-red-200 dark:border-red-800 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-3 text-left">
+                       <AlertCircle className="text-red-500 shrink-0" size={20} />
+                       <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">{micError}</p>
+                    </div>
+                    <button onClick={() => setMicError(null)} className="text-red-500 hover:bg-red-100 dark:hover:bg-red-800 p-1 rounded-lg transition-colors"><X size={16} /></button>
+                  </div>
+                )}
+
+                {successMsg && (
+                  <div className="w-full mb-6 bg-green-50 dark:bg-green-900/30 p-4 rounded-2xl flex items-center gap-3 border border-green-200 dark:border-green-800 animate-in fade-in slide-in-from-top-2">
+                    <Save className="text-green-500 shrink-0" size={20} />
+                    <p className="text-xs text-green-700 dark:text-green-300 font-bold">{successMsg}</p>
+                  </div>
+                )}
+
+                {/* ADMIN CONTROL BAR */}
+                {isAdmin && currentPoem.stableId !== 'empty' && (
+                  <div className="w-full flex items-center justify-between px-5 py-2 mb-8 bg-slate-100/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700 animate-in fade-in">
+                    <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase hidden sm:block">Admin Mode Active</span>
+                    <div className="flex items-center gap-2 mx-auto sm:mx-0">
+                      <button onClick={() => movePoemUp(currentPoem.stableId)} disabled={currentSortedIndex <= 0} className="p-1.5 text-slate-500 hover:text-indigo-500 disabled:opacity-30 transition-colors" title="Move Up"><ChevronUp size={18} /></button>
+                      <button onClick={() => movePoemDown(currentPoem.stableId)} disabled={currentSortedIndex >= sortedPoems.length - 1} className="p-1.5 text-slate-500 hover:text-indigo-500 disabled:opacity-30 transition-colors" title="Move Down"><ChevronDown size={18} /></button>
+                      <div className="w-px h-5 bg-slate-300 dark:bg-slate-600 mx-2" />
+                      <button onClick={() => handleEditClick(currentPoem)} className="p-1.5 text-slate-500 hover:text-blue-500 transition-colors" title="Edit Poem"><Edit size={18} /></button>
+                      <button onClick={() => setPoemToDelete(currentPoem.stableId)} className="p-1.5 text-slate-500 hover:text-red-500 transition-colors" title="Delete Poem"><Trash2 size={18} /></button>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="text-xs font-bold text-slate-400 mb-4 tracking-widest">
+                  POEM {currentSortedIndex + 1} OF {allPoems.length}
+                </div>
+
+                <div className="flex justify-center items-center gap-6 mb-8">
+                    <button onClick={() => toggleFavorite(selectedPoemId)} className={`p-1 transition-colors ${favorites.includes(selectedPoemId) ? 'text-red-500' : 'text-slate-300 hover:text-red-400'}`} title="Mark as favorite"><Heart size={22} fill={favorites.includes(selectedPoemId) ? "currentColor" : "none"} /></button>
+                    
+                    {isAdmin && (
+                      <button onClick={startRecording} className={`p-1 transition-colors ${isRecording ? 'text-red-500 scale-125' : 'text-slate-300 hover:text-red-500'}`} title="Record Voice"><Mic size={22} /></button>
+                    )}
+
+                    <button 
+                      onClick={() => setLanguageMode(languageMode === 'ro' ? 'hi' : 'ro')} 
+                      className={`p-1 transition-all ${languageMode === 'ro' ? 'text-red-600 scale-110' : 'text-slate-300 hover:text-red-400'}`} 
+                      title="Transliterate (Roman Hindi)"
+                    >
+                      <span className="font-bold text-lg font-serif">Aa</span>
+                    </button>
+
+                    <button 
+                      onClick={() => setLanguageMode(languageMode === 'en' ? 'hi' : 'en')} 
+                      className={`p-1 transition-all ${languageMode === 'en' ? 'text-red-600 scale-110' : 'text-slate-300 hover:text-red-400'}`} 
+                      title="Translate to English"
+                    >
+                      <Languages size={22} />
+                    </button>
+
+                    <button 
+                      onClick={analyzePoem} 
+                      disabled={isAnalyzing}
+                      className={`p-1 transition-all ${poemAnalysis ? 'text-indigo-600 scale-110' : 'text-slate-300 hover:text-indigo-400'} disabled:opacity-50`} 
+                      title="✨ Discover Meaning"
+                    >
+                      {isAnalyzing ? <Loader2 className="animate-spin" size={22} /> : <Sparkles size={22} />}
+                    </button>
+                </div>
+
+                <h2 className={`font-bold mb-4 tracking-tight text-red-600 dark:text-red-400 leading-tight drop-shadow-sm transition-all duration-300 ${languageMode === 'en' ? 'text-2xl lg:text-4xl font-sans italic' : languageMode === 'ro' ? 'text-2xl lg:text-4xl font-sans font-semibold text-red-700 dark:text-red-300' : 'text-3xl lg:text-5xl font-hindi'}`}>
+                  {displayTitle}
+                </h2>
+
+                {/* 3-STAR RATING SYSTEM UI */}
+                {currentPoem.stableId !== 'empty' && (
+                  <div className="flex flex-col items-center justify-center gap-1 mb-6">
+                    <div className="flex gap-2">
+                      {[1, 2, 3].map(star => (
+                        <button 
+                          key={star} 
+                          onClick={() => handleRate(star)}
+                          className={`p-1.5 transition-transform hover:scale-110 active:scale-95 ${currentRating?.userRating >= star ? 'text-yellow-500' : 'text-slate-300 dark:text-slate-600'}`}
+                          title={`Rate ${star} Star${star > 1 ? 's' : ''}`}
+                        >
+                          <Star fill={currentRating?.userRating >= star ? "currentColor" : "none"} size={26} />
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
+                      {currentRating?.avg ? `${currentRating.avg.toFixed(1)} ★ Average (${currentRating.count} Rating${currentRating.count !== 1 ? 's' : ''})` : 'Unrated - Be the first to rate!'}
+                    </span>
+                  </div>
+                )}
+
+            </div>
+
+            {/* Media Player Box */}
+            {currentMedia && !isRecording && (
+                <div className="mb-12 p-5 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-top-2 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest flex items-center gap-1">
+                          <Cloud size={12} /> {currentMedia.label} audio
+                        </span>
+                        {isAdmin && (
+                          <button onClick={handleDeleteRecording} className="text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                        )}
+                    </div>
+                    {currentMedia.type === 'video' ? (
+                      <video src={currentMedia.url} controls className="w-full rounded-xl bg-black shadow-lg" />
+                    ) : (
+                      <audio src={currentMedia.url} controls className="w-full h-10" />
+                    )}
+                </div>
+            )}
+
+            {/* Poem Text Layer */}
+            <div className={`poem-content whitespace-pre-wrap leading-[1.8] text-center transition-all duration-700 drop-shadow-sm opacity-100 ${languageMode === 'en' ? 'text-lg lg:text-xl font-sans italic text-slate-700 dark:text-slate-300' : languageMode === 'ro' ? 'text-lg lg:text-xl font-sans text-slate-800 dark:text-slate-200 font-medium' : 'text-xl lg:text-2xl font-hindi text-slate-800 dark:text-slate-100'}`}>
+                {displayContent}
+            </div>
+            
+            {/* Poem Analysis Layer */}
+            {poemAnalysis && (
+              <div className="mt-12 p-6 md:p-8 bg-indigo-50/80 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-3xl animate-in fade-in slide-in-from-top-4 text-left shadow-sm relative">
+                <button onClick={() => setPoemAnalysis(null)} className="absolute top-5 right-5 text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"><X size={20} /></button>
+                <h3 className="text-sm font-bold text-indigo-800 dark:text-indigo-300 mb-4 flex items-center gap-2 uppercase tracking-widest">
+                  <Sparkles size={18} /> Heart of the Poem
+                </h3>
+                <div className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap font-sans italic">
+                  {poemAnalysis}
+                </div>
+              </div>
+            )}
+
+            <footer className="mt-20 pt-8 border-t border-slate-100 dark:border-slate-700 text-center text-slate-400 italic text-sm">संदीप ढींगरा - "मेरा सच"</footer>
+          </div>
+        </article>
+
+        {/* Navigation Controls follow the dynamically sorted array! */}
+        <div className="mt-12 flex gap-4">
+          <button 
+            disabled={currentSortedIndex <= 0} 
+            onClick={() => setSelectedPoemId(sortedPoems[currentSortedIndex - 1]?.stableId)} 
+            className="px-8 py-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl disabled:opacity-30 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
+          >
+            Previous
+          </button>
+          
+          <button 
+            disabled={currentSortedIndex >= sortedPoems.length - 1} 
+            onClick={() => setSelectedPoemId(sortedPoems[currentSortedIndex + 1]?.stableId)} 
+            className="px-8 py-3 bg-red-600 text-white rounded-2xl disabled:opacity-30 shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 transition-all font-medium"
+          >
+            Next Poem
+          </button>
+        </div>
+      </main>
+
+      {/* Add / Edit Poem Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6">
+          <div className="bg-white dark:bg-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{editingPoemId ? "Edit Poem" : "Upload New Poem"}</h2>
+              <button onClick={() => {setIsAddModalOpen(false); setEditingPoemId(null);}} className="text-slate-400 hover:text-red-500 transition-colors"><X size={24} /></button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+              
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm text-indigo-800 dark:text-indigo-300">
+                  <span className="font-bold flex items-center gap-2 mb-1"><Sparkles size={16}/> AI Translation & Transliteration</span>
+                  Enter your poem in <b>any one language</b> (Hindi, Roman, or English), then let AI fill in the rest!
+                </div>
+                <button 
+                  onClick={autoTranslatePoem} 
+                  disabled={isTranslating}
+                  className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-md shadow-indigo-200 dark:shadow-none"
+                >
+                  {isTranslating ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
+                  {isTranslating ? "Translating..." : "Auto-Fill Now"}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Hindi Title *</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" placeholder="उदासी" value={newPoem.title} onChange={e => setNewPoem({...newPoem, title: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Roman Title</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" placeholder="Udaasi" value={newPoem.titleTrans} onChange={e => setNewPoem({...newPoem, titleTrans: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">English Title</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" placeholder="Sadness" value={newPoem.titleEn} onChange={e => setNewPoem({...newPoem, titleEn: e.target.value})} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Hindi Content *</label>
+                    <button 
+                      onClick={suggestNextLine}
+                      disabled={isSuggestingLine}
+                      className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 flex items-center gap-1 uppercase tracking-widest disabled:opacity-50"
+                    >
+                      {isSuggestingLine ? <Loader2 className="animate-spin" size={12} /> : <Sparkles size={12} />}
+                      {isSuggestingLine ? "Thinking..." : "Suggest Line"}
+                    </button>
+                  </div>
+                  <textarea rows={6} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none" placeholder="कविता यहाँ लिखें..." value={newPoem.content} onChange={e => setNewPoem({...newPoem, content: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Roman Content</label>
+                  <textarea rows={6} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none" placeholder="Kavita yahan likhein..." value={newPoem.contentTrans} onChange={e => setNewPoem({...newPoem, contentTrans: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">English Content</label>
+                  <textarea rows={6} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none" placeholder="Write poem here..." value={newPoem.contentEn} onChange={e => setNewPoem({...newPoem, contentEn: e.target.value})} />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Artwork Theme</label>
+                <select className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" value={newPoem.artworkTheme} onChange={e => setNewPoem({...newPoem, artworkTheme: e.target.value})}>
+                  <option value="barren">Barren</option>
+                  <option value="tomb">Tomb</option>
+                  <option value="lake">Lake</option>
+                  <option value="tree">Tree</option>
+                  <option value="tangle">Tangle</option>
+                  <option value="ravan">Ravan</option>
+                  <option value="umbrella">Umbrella</option>
+                  <option value="city">City</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
+              <button onClick={() => {setIsAddModalOpen(false); setEditingPoemId(null);}} className="px-6 py-2 rounded-xl text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+              <button onClick={handleSaveNewPoem} className="px-6 py-2 rounded-xl bg-red-600 text-white font-bold shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 transition-colors">{editingPoemId ? "Save Changes" : "Upload Poem"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Modal */}
+      {poemToDelete && (
+         <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+               <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={32} />
+               </div>
+               <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Delete Poem?</h3>
+               <p className="text-slate-500 dark:text-slate-400 mb-8">Are you sure you want to delete this poem? This action cannot be completely undone.</p>
+               
+               <div className="flex gap-3 justify-center">
+                 <button onClick={() => setPoemToDelete(null)} className="px-6 py-3 rounded-xl text-slate-600 dark:text-slate-300 font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                 <button onClick={confirmDeletePoem} className="px-6 py-3 rounded-xl bg-red-600 text-white font-bold shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 transition-colors">Yes, Delete</button>
+               </div>
+            </div>
+         </div>
+      )}
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+        
+        body { 
+            font-family: 'Noto Sans Devanagari', sans-serif; 
+            overflow-x: hidden;
+        }
+        
+        .font-hindi { 
+            font-family: 'Noto Serif Devanagari', serif; 
+        }
+
+        .font-sans {
+            font-family: 'Lora', serif;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { 
+            width: 4px; 
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+            background: #cbd5e1; 
+            border-radius: 10px; 
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { 
+            background: #334155; 
+        }
+
+        .poem-content {
+            text-shadow: 0px 0px 40px rgba(255,255,255,0.8);
+        }
+        
+        .dark .poem-content {
+            text-shadow: 0px 0px 40px rgba(15,23,42,0.8);
+        }
+
+        audio::-webkit-media-controls-panel {
+          background-color: transparent;
+        }
+      `}} />
+    </div>
+  );
+};
+
+export default App;
