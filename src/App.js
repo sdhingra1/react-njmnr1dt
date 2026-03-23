@@ -135,25 +135,14 @@ const deleteAudioDB = async (poemId) => {
 
 // Simple artistic line border with a clean white background
 const ArtisticLineBorder = ({ darkMode }) => {
-  const lineColor = darkMode ? '#f87171' : '#ef4444'; // Vivid red border
-  const accentColor = darkMode ? '#fca5a5' : '#b91c1c'; // Deeper/Lighter red for accents
+  const lineColor = darkMode ? '#475569' : '#cbd5e1'; // Grey border
 
   return (
     <div className="absolute inset-0 pointer-events-none z-10 p-5">
       <div 
         className="w-full h-full rounded-[24px] relative"
-        style={{ border: `1.5px solid ${lineColor}` }}
+        style={{ border: `3px solid ${lineColor}` }}
       >
-        <div 
-          className="absolute inset-[6px] rounded-[18px]"
-          style={{ border: `1.5px dashed ${lineColor}` }}
-        >
-          {/* Corner Accents (Little Diamonds) */}
-          <div className="absolute left-0 top-0 w-2 h-2 rotate-45 -translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: accentColor }} />
-          <div className="absolute right-0 top-0 w-2 h-2 rotate-45 translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: accentColor }} />
-          <div className="absolute left-0 bottom-0 w-2 h-2 rotate-45 -translate-x-1/2 translate-y-1/2" style={{ backgroundColor: accentColor }} />
-          <div className="absolute right-0 bottom-0 w-2 h-2 rotate-45 translate-x-1/2 translate-y-1/2" style={{ backgroundColor: accentColor }} />
-        </div>
       </div>
     </div>
   );
