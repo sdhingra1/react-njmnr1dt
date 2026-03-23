@@ -14,12 +14,17 @@ import {
   AlertCircle,
   Cloud,
   Save,
-  Star
+  Star,
+  Edit,
+  Sparkles,
+  Loader2,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, arrayUnion } from 'firebase/firestore';
 
 // --------------------------------------------------------
 // USER'S FIREBASE CONFIGURATION
@@ -78,13 +83,13 @@ const initDB = () => {
   });
 };
 
-const saveAudioDB = async (poemIndex, base64data, mimeType) => {
+const saveAudioDB = async (poemId, base64data, mimeType) => {
   const database = await initDB();
   if(!database) return;
   return new Promise((resolve, reject) => {
     const tx = database.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    const request = store.put({ audioBase64: base64data, mimeType }, poemIndex);
+    const request = store.put({ audioBase64: base64data, mimeType }, String(poemId));
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });
@@ -112,18 +117,17 @@ const getAllAudioDB = async () => {
   });
 };
 
-const deleteAudioDB = async (poemIndex) => {
+const deleteAudioDB = async (poemId) => {
   const database = await initDB();
   if(!database) return;
   return new Promise((resolve, reject) => {
     const tx = database.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    const request = store.delete(poemIndex);
+    const request = store.delete(String(poemId));
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });
 };
-
 
 // --------------------------------------------------------
 // GRAPHICS & CONTENT
@@ -211,7 +215,7 @@ const PoemGraphic = ({ theme, darkMode }) => {
   return <div className="w-full h-full">{graphics[theme] || graphics.barren}</div>;
 };
 
-const poems = [
+const INITIAL_POEMS = [
   {
     title: "कोई लफ्ज़ आज जंचता ही नहीं",
     titleTrans: "Koi Lafz Aaj Janchta Hi Nahin",
@@ -316,7 +320,7 @@ const poems = [
     title: "शौक़",
     titleTrans: "Shauq",
     titleEn: "Desire",
-    content: "ख़्वाबों की लहद पर चल कर\nदिल ने ढ़ोया है কুল भार जीने का\nकह भी देती जुबां तो क्या होता\nशौक़ है दर्द- -जाम पीने का",
+    content: "ख़्वाबों की लहद पर चल कर\nदिल ने ढ़ोया है भार जीने का\nकह भी देती जुबां तो क्या होता\nशौक़ है दर्द- -जाम पीने का",
     contentTrans: "Khwaabon ki lahad par chal kar\nDil ne dhoya hai bhaar jeene ka\nKeh bhi deti zuban toh kya hota\nShauq hai dard-e-jaam peene ka",
     contentEn: "Walking on the grave of dreams\nThe heart has carried the burden of living\nEven if the tongue had spoken, what would happen\nThere is a desire to drink the cup of pain",
     tags: ["शौक़", "दर्द"],
@@ -516,7 +520,7 @@ const poems = [
     title: "ये शहद से मीठी शाम",
     titleTrans: "Ye Shahad Se Meethi Shaam",
     titleEn: "This Honey-Sweet Evening",
-    content: "ये शहद से मीठी शाम\nपल पल, थम थम\nटपकी टप टप\n\nशब् शब् शबनम\n\nचुप चुप नज़रें\nगुप चुप बातें\nधम धम धड़कन\n\nजलती जलती\n\nसुलगी सुलगी\n\nबैहकी बहकी\n\nमहकी महकी\n\nमधुर मधुर\n\nरेशम रेशम\n\nआखरी मुलाकात की\nतर्क-ए-ताल्लुकात की\n\nकोई करामात की\n\nकैसे भूले कोई\nकैसे जी ले कोई\nरात रोको कोई\n\nजां निकलने को है\nसांस रुकने को है\nअब गुजरने को है\n\nये शहद से मीठी शाम",
+    content: "ये शहद से मीठी शाम\nपल पल, थम थम\nटपकी टप टप\n\nशब् शब् शबनम\n\nचुप चुप नज़रें\nगुप चुप बातें\nधम धम धड़कन\n\nजलती जलती\n\nसुलगी सुलगी\n\nबैहकी बहकी\n\nमहकी महकी\n\nमधुर मधुर\n\nरेशम रेशम\n\nआखरी मुलाकात की\nतर्क-ए-ताल्लुकात की\n\nकोई करामात की\n\nकैसे भूले कोई\nकैसे जी ले कोई\nरात रोको कोई\n\nजां निकलने को है\nसांस रुकने को है\nअब गुजरने को है\n\nये शहद से मीठी शाम",
     contentTrans: "Ye shahad se meethi shaam\nPal pal, tham tham\nTapki tap tap\n\nShab shab shabnam\n\nChup chup nazrein\nGup chup baatein\nDham dham dhadkan\n\nJalti jalti\n\nSulgi sulgi\n\nBehki behki\n\nMehki mehki\n\nMadhur madhur\n\nResham resham\n\nAakhri mulaqat ki\nTark-e-talluqaat ki\n\nKoi karamaat ki\n\nKaise bhoole koi\nKaise jee le koi\nRaat roko koi\n\nJaan nikalne ko hai\nSaans rukne ko hai\nAb guzarne ko hai\n\nYe shahad se meethi shaam",
     contentEn: "This honey-sweet evening\nMoment by moment, pausing\nDripping drop by drop\n\nDew, dew, every night\n\nSilent, silent glances\nSecret, secret talks\nThump, thump heartbeat\n\nBurning, burning\n\nSmoldering, smoldering\n\nWandering, wandering\n\nFragrant, fragrant\n\nSweet, sweet\n\nSilken, silken\n\nOf the last meeting\nOf breaking off relations\n\nOf some miracle\n\nHow can anyone forget\nHow can anyone live\nLet someone stop the night\n\nLife is about to leave\nBreath is about to stop\nNow it is about to pass\n\nThis honey-sweet evening",
     tags: ["शाम", "याद"],
@@ -587,8 +591,8 @@ const poems = [
 const App = () => {
   const [user, setUser] = useState(null);
   
-  // selectedPoemIndex serves as the persistent original ID (0 to 36)
-  const [selectedPoemIndex, setSelectedPoemIndex] = useState(0);
+  // selectedPoemId replaces index to firmly support custom and string IDs
+  const [selectedPoemId, setSelectedPoemId] = useState('0');
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -604,22 +608,49 @@ const App = () => {
   const [micError, setMicError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   
+  const [customPoems, setCustomPoems] = useState([]);
+  const [deletedOriginals, setDeletedOriginals] = useState([]);
+  const [poemOrder, setPoemOrder] = useState([]);
+
+  // Modals state
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingPoemId, setEditingPoemId] = useState(null); // null means creating new
+  const [poemToDelete, setPoemToDelete] = useState(null); // holds the stableId of the poem to delete
+
+  const [newPoem, setNewPoem] = useState({
+    title: '', titleTrans: '', titleEn: '',
+    content: '', contentTrans: '', contentEn: '',
+    artworkTheme: 'barren'
+  });
+  const [isTranslating, setIsTranslating] = useState(false);
+  
+  // NEW: Admin state to hide/show edit features
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
 
   useEffect(() => {
-    // Ensure Tailwind uses class-based dark mode to match the preview environment exactly
+    // Ensure Tailwind uses class-based dark mode
     window.tailwind = window.tailwind || {};
     window.tailwind.config = {
       darkMode: 'class'
     };
 
-    // Fallback: Inject Tailwind CSS if the host environment missed it.
     if (!document.querySelector('script[src*="tailwindcss"]')) {
       const script = document.createElement('script');
       script.src = "https://cdn.tailwindcss.com";
       document.head.appendChild(script);
+    }
+
+    // CHECK FOR SECRET ADMIN LINK
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('admin') === 'true') {
+      localStorage.setItem('mera_sach_admin', 'true');
+      setIsAdmin(true);
+    } else if (localStorage.getItem('mera_sach_admin') === 'true') {
+      setIsAdmin(true);
     }
   }, []);
 
@@ -648,8 +679,8 @@ const App = () => {
       try {
         const locals = await getAllAudioDB();
         const localRecordings = {};
-        for (const [idx, data] of Object.entries(locals)) {
-          localRecordings[idx] = {
+        for (const [idxStr, data] of Object.entries(locals)) {
+          localRecordings[idxStr] = {
             url: data.audioBase64,
             type: data.mimeType && data.mimeType.includes('video') ? 'video' : 'audio',
             label: 'Local'
@@ -663,11 +694,21 @@ const App = () => {
     loadLocal();
   }, []);
 
-  // 2. Fetch recordings AND ratings from Firebase Firestore
+  // 2. Fetch data from Firebase Firestore
   useEffect(() => {
     if (!db || !appId) return; 
 
     const activeUid = user ? user.uid : getLocalUid();
+
+    // SYSTEM SETTINGS (for hiding deleted originals & custom ordering)
+    const settingsRef = doc(db, 'mera_sach_settings', 'system');
+    const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
+      if (docSnap.exists()) {
+         const data = docSnap.data();
+         setDeletedOriginals(data.deletedOriginals || []);
+         setPoemOrder(data.poemOrder || []);
+      }
+    }, (error) => console.error("Firestore settings sub error:", error));
 
     // AUDIO
     const recordingsRef = collection(db, 'mera_sach_audio');
@@ -675,8 +716,8 @@ const App = () => {
       const newRecordings = {};
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data();
-        const poemIndex = parseInt(docSnap.id.replace('poem_', ''), 10);
-        newRecordings[poemIndex] = {
+        const rawId = docSnap.id.replace('poem_', '');
+        newRecordings[rawId] = {
           url: data.audioBase64,
           type: data.mimeType && data.mimeType.includes('video') ? 'video' : 'audio',
           label: 'Cloud'
@@ -689,14 +730,12 @@ const App = () => {
     const ratingsRef = collection(db, 'mera_sach_ratings');
     const unsubRatings = onSnapshot(ratingsRef, (snapshot) => {
       const newRatings = {};
-      
-      // Pull local ratings to merge with cloud just in case
       const localRatingsRaw = localStorage.getItem('mera_sach_local_ratings');
       const localRatings = localRatingsRaw ? JSON.parse(localRatingsRaw) : {};
 
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data();
-        const poemIndex = parseInt(docSnap.id.replace('poem_', ''), 10);
+        const rawId = docSnap.id.replace('poem_', '');
         
         let totalStars = 0;
         let count = 0;
@@ -710,60 +749,93 @@ const App = () => {
           }
         }
         
-        // Merge with local if cloud doesn't have the user's rating yet
-        if (!currentUserRating && localRatings[poemIndex]) {
-            currentUserRating = localRatings[poemIndex];
+        if (!currentUserRating && localRatings[rawId]) {
+            currentUserRating = localRatings[rawId];
             totalStars += currentUserRating;
             count++;
         }
         
-        newRatings[poemIndex] = {
+        newRatings[rawId] = {
           avg: count > 0 ? totalStars / count : 0,
           count: count,
           userRating: currentUserRating
         };
       });
 
-      // Inject any purely local ratings that haven't made it to the cloud yet
       for (const [idxStr, starVal] of Object.entries(localRatings)) {
-        const idx = parseInt(idxStr, 10);
-        if (!newRatings[idx]) {
-           newRatings[idx] = { avg: starVal, count: 1, userRating: starVal };
+        if (!newRatings[idxStr]) {
+           newRatings[idxStr] = { avg: starVal, count: 1, userRating: starVal };
         }
       }
 
       setRatings(newRatings);
     }, (error) => {
       console.error("Firestore rating sub error:", error);
-      // Fallback to pure local ratings if Firestore is denied
       const localRatingsRaw = localStorage.getItem('mera_sach_local_ratings');
       if (localRatingsRaw) {
           const localRatings = JSON.parse(localRatingsRaw);
           const fallbackRatings = {};
           for (const [idxStr, starVal] of Object.entries(localRatings)) {
-              fallbackRatings[parseInt(idxStr, 10)] = { avg: starVal, count: 1, userRating: starVal };
+              fallbackRatings[idxStr] = { avg: starVal, count: 1, userRating: starVal };
           }
           setRatings(prev => ({ ...fallbackRatings, ...prev }));
       }
     });
 
+    // CUSTOM POEMS
+    const poemsRef = collection(db, 'mera_sach_custom_poems');
+    const unsubPoems = onSnapshot(poemsRef, (snapshot) => {
+      const loaded = [];
+      snapshot.docs.forEach(docSnap => {
+        loaded.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      loaded.sort((a, b) => a.createdAt - b.createdAt);
+      setCustomPoems(loaded);
+    }, (error) => console.error("Firestore custom poems sub error:", error));
+
     return () => {
+      unsubSettings();
       unsubAudio();
       unsubRatings();
+      unsubPoems();
     };
   }, [user]);
+
+  // ALL POEMS MERGE (Originals + Custom Uploads + Overrides)
+  const allPoems = useMemo(() => {
+    // Separate pure new custom poems and those overriding an original poem
+    const pureCustom = customPoems.filter(p => p.overridesOriginal === undefined || p.overridesOriginal === null);
+    const overrides = customPoems.filter(p => p.overridesOriginal !== undefined && p.overridesOriginal !== null);
+    
+    // Process original hardcoded poems
+    const base = INITIAL_POEMS.map((p, idx) => {
+       const stableId = String(idx);
+       
+       // Hide if marked as deleted globally
+       if (deletedOriginals.includes(stableId)) return null;
+
+       // If it has been edited, use the cloud version but keep the stable original ID
+       const override = overrides.find(o => o.overridesOriginal === stableId);
+       if (override) return { ...override, stableId }; 
+       
+       return { ...p, stableId };
+    }).filter(Boolean); // Remove nulls (deleted ones)
+
+    // Map pure custom poems to use their cloud Document ID as their stableId
+    const mappedCustom = pureCustom.map(p => ({ ...p, stableId: p.id }));
+
+    return [...base, ...mappedCustom];
+  }, [customPoems, deletedOriginals]);
+
 
   // Sync URL safely
   useEffect(() => {
     try {
       if (window.location.protocol === 'blob:' || window.location.origin === 'null') return;
       const params = new URLSearchParams(window.location.search);
-      const poemIndexStr = params.get('poem');
-      if (poemIndexStr !== null) {
-        const index = parseInt(poemIndexStr, 10);
-        if (!isNaN(index) && index >= 0 && index < poems.length) {
-          setSelectedPoemIndex(index);
-        }
+      const poemIdStr = params.get('poem');
+      if (poemIdStr !== null) {
+        setSelectedPoemId(poemIdStr);
       }
     } catch (err) {
       console.warn("Could not read URL params:", err);
@@ -774,24 +846,35 @@ const App = () => {
     try {
       if (window.location.protocol === 'blob:' || window.location.origin === 'null') return;
       const url = new URL(window.location);
-      url.searchParams.set('poem', selectedPoemIndex);
+      url.searchParams.set('poem', selectedPoemId);
       window.history.pushState({}, '', url);
     } catch (err) {
       console.warn("History pushState blocked in this environment.");
     }
-  }, [selectedPoemIndex]);
+  }, [selectedPoemId]);
 
 
-  // DYNAMIC SORTING Logic: Maps the poems to their original index, then sorts by global star rating.
+  // DYNAMIC SORTING Logic: Sorts by custom manual order, then falls back to global star rating.
   const sortedPoems = useMemo(() => {
-    return poems.map((p, idx) => ({ ...p, originalId: idx }))
-                .sort((a, b) => {
-                  const avgA = ratings[a.originalId]?.avg || 0;
-                  const avgB = ratings[b.originalId]?.avg || 0;
-                  // If ratings are tied, fallback to original order
-                  return avgB - avgA || a.originalId - b.originalId; 
-                });
-  }, [ratings]);
+    const currentOrder = [...poemOrder];
+    return [...allPoems].sort((a, b) => {
+        let indexA = currentOrder.indexOf(a.stableId);
+        let indexB = currentOrder.indexOf(b.stableId);
+        
+        // If not explicitly ordered yet, append to the bottom
+        if (indexA === -1) indexA = Number.MAX_SAFE_INTEGER;
+        if (indexB === -1) indexB = Number.MAX_SAFE_INTEGER;
+
+        if (indexA !== indexB) {
+            return indexA - indexB;
+        }
+
+        // Fallback for ties (newly added poems) - by rating
+        const avgA = ratings[a.stableId]?.avg || 0;
+        const avgB = ratings[b.stableId]?.avg || 0;
+        return avgB - avgA || String(a.stableId).localeCompare(String(b.stableId)); 
+    });
+  }, [ratings, allPoems, poemOrder]);
 
   const filteredPoems = useMemo(() => {
     return sortedPoems.filter(p => 
@@ -804,17 +887,229 @@ const App = () => {
 
   // Find the exact rank/position of the actively viewed poem in the newly sorted array
   const currentSortedIndex = useMemo(() => {
-    return sortedPoems.findIndex(p => p.originalId === selectedPoemIndex);
-  }, [sortedPoems, selectedPoemIndex]);
+    return sortedPoems.findIndex(p => p.stableId === selectedPoemId);
+  }, [sortedPoems, selectedPoemId]);
 
+  // --------------------------------------------------------
+  // POEM ADD / EDIT / DELETE / MOVE ACTIONS
+  // --------------------------------------------------------
 
-  const toggleFavorite = (index) => {
-    setFavorites(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]);
+  const movePoemUp = async (stableId) => {
+    if (!db) return;
+    const idx = sortedPoems.findIndex(p => p.stableId === stableId);
+    if (idx <= 0) return; // already at the top
+
+    // Map the current visual order into a flat array of IDs
+    const newOrder = sortedPoems.map(p => p.stableId);
+    // Swap elements
+    [newOrder[idx - 1], newOrder[idx]] = [newOrder[idx], newOrder[idx - 1]];
+    
+    try {
+       await setDoc(doc(db, 'mera_sach_settings', 'system'), { poemOrder: newOrder }, { merge: true });
+    } catch(e) { console.error("Move Up Failed", e); }
   };
 
-  const handlePoemSelect = (originalId) => {
+  const movePoemDown = async (stableId) => {
+    if (!db) return;
+    const idx = sortedPoems.findIndex(p => p.stableId === stableId);
+    if (idx === -1 || idx >= sortedPoems.length - 1) return; // already at the bottom
+
+    const newOrder = sortedPoems.map(p => p.stableId);
+    [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
+    
+    try {
+       await setDoc(doc(db, 'mera_sach_settings', 'system'), { poemOrder: newOrder }, { merge: true });
+    } catch(e) { console.error("Move Down Failed", e); }
+  };
+
+  const handleEditClick = (poemToEdit) => {
+    setNewPoem({
+      title: poemToEdit.title || '', titleTrans: poemToEdit.titleTrans || '', titleEn: poemToEdit.titleEn || '',
+      content: poemToEdit.content || '', contentTrans: poemToEdit.contentTrans || '', contentEn: poemToEdit.contentEn || '',
+      artworkTheme: poemToEdit.artworkTheme || 'barren'
+    });
+    setEditingPoemId(poemToEdit.stableId);
+    setIsAddModalOpen(true);
+  };
+
+  const handleSaveNewPoem = async () => {
+    if (!newPoem.title || !newPoem.content) {
+      setMicError("Hindi Title and Content are required.");
+      setTimeout(() => setMicError(null), 3000);
+      return;
+    }
+    if (!db) {
+      setMicError("Database connection missing. Cannot save poem to cloud.");
+      setTimeout(() => setMicError(null), 3000);
+      return;
+    }
+    try {
+      if (editingPoemId !== null) {
+        // WE ARE EDITING AN EXISTING POEM
+        
+        // 1. Is it an original hardcoded poem? (ID will be a numeric string '0', '1', etc)
+        const isOriginal = INITIAL_POEMS[editingPoemId] !== undefined;
+
+        if (isOriginal) {
+            // Find if we already have an override cloud document for this original poem
+            const existingOverride = customPoems.find(p => p.overridesOriginal === editingPoemId);
+            
+            if (existingOverride) {
+                await updateDoc(doc(db, 'mera_sach_custom_poems', existingOverride.id), {
+                    ...newPoem, updatedAt: Date.now()
+                });
+            } else {
+                // Create a new cloud document linking to the original
+                await setDoc(doc(collection(db, 'mera_sach_custom_poems')), {
+                    ...newPoem, overridesOriginal: editingPoemId, updatedAt: Date.now(), tags: ["Edited"]
+                });
+            }
+        } else {
+            // 2. It is a pure custom uploaded poem
+            await updateDoc(doc(db, 'mera_sach_custom_poems', editingPoemId), {
+                ...newPoem, updatedAt: Date.now()
+            });
+        }
+        setSuccessMsg("Poem updated successfully!");
+
+      } else {
+        // WE ARE ADDING A BRAND NEW POEM
+        const newDocRef = doc(collection(db, 'mera_sach_custom_poems'));
+        await setDoc(newDocRef, {
+          ...newPoem,
+          createdAt: Date.now(),
+          tags: ["Custom"]
+        });
+        setSuccessMsg("Poem added successfully!");
+      }
+
+      setIsAddModalOpen(false);
+      setEditingPoemId(null);
+      setNewPoem({title: '', titleTrans: '', titleEn: '', content: '', contentTrans: '', contentEn: '', artworkTheme: 'barren'});
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (e) {
+      console.error(e);
+      setMicError("Failed to save poem. Ensure database is in test mode.");
+      setTimeout(() => setMicError(null), 3000);
+    }
+  };
+
+  const confirmDeletePoem = async () => {
+    if (!poemToDelete || !db) return;
+    
+    try {
+       const isOriginal = INITIAL_POEMS[poemToDelete] !== undefined;
+
+       if (isOriginal) {
+          // If it's an original, we hide it globally using the settings document
+          await setDoc(doc(db, 'mera_sach_settings', 'system'), {
+             deletedOriginals: arrayUnion(poemToDelete)
+          }, { merge: true });
+       } else {
+          // If it's a custom uploaded poem, physically delete it from the cloud
+          await deleteDoc(doc(db, 'mera_sach_custom_poems', poemToDelete));
+       }
+
+       // Navigate away from the deleted poem to the first available one
+       if (sortedPoems.length > 0) {
+         setSelectedPoemId(sortedPoems[0].stableId);
+       }
+       setSuccessMsg("Poem deleted.");
+       setPoemToDelete(null);
+       setTimeout(() => setSuccessMsg(null), 3000);
+
+    } catch (e) {
+       console.error("Delete failed", e);
+       setMicError("Failed to delete. Ensure database permissions are open.");
+       setPoemToDelete(null);
+       setTimeout(() => setMicError(null), 3000);
+    }
+  };
+
+  const autoTranslatePoem = async () => {
+    const inputTitle = newPoem.title || newPoem.titleTrans || newPoem.titleEn || "";
+    const inputContent = newPoem.content || newPoem.contentTrans || newPoem.contentEn || "";
+
+    if (!inputTitle && !inputContent) {
+      setMicError("Please enter a title or content in at least one language first.");
+      setTimeout(() => setMicError(null), 3000);
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const apiKey = "";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      
+      const systemPrompt = `You are a poetry translator. The user will provide a poem (title and content) in either Hindi (Devanagari script), Roman Hindi (Transliteration), or English.
+      Your task is to provide the missing forms so that all three exist: Hindi, Roman Hindi, and English.
+      Maintain the poetic flow, emotional depth, and rhythm in the translations.`;
+
+      const payload = {
+        contents: [{ parts: [{ text: `Original Input:\nTitle: ${inputTitle}\nContent:\n${inputContent}` }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: { 
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              title: { type: "STRING", description: "Title in Hindi (Devanagari)" },
+              titleTrans: { type: "STRING", description: "Title in Roman Hindi (Transliteration)" },
+              titleEn: { type: "STRING", description: "Title translated to English" },
+              content: { type: "STRING", description: "Content in Hindi (Devanagari)" },
+              contentTrans: { type: "STRING", description: "Content in Roman Hindi (Transliteration)" },
+              contentEn: { type: "STRING", description: "Content translated to English" }
+            }
+          }
+        }
+      };
+
+      const delays = [1000, 2000, 4000, 8000, 16000];
+      let data;
+      for (let i = 0; i <= 5; i++) {
+        try {
+          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          data = await response.json();
+          break;
+        } catch (error) {
+          if (i === 5) throw error;
+          await new Promise(resolve => setTimeout(resolve, delays[i]));
+        }
+      }
+
+      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (textData) {
+        const parsed = JSON.parse(textData);
+        setNewPoem(prev => ({
+          ...prev,
+          title: parsed.title || prev.title,
+          titleTrans: parsed.titleTrans || prev.titleTrans,
+          titleEn: parsed.titleEn || prev.titleEn,
+          content: parsed.content || prev.content,
+          contentTrans: parsed.contentTrans || prev.contentTrans,
+          contentEn: parsed.contentEn || prev.contentEn
+        }));
+        setSuccessMsg("Translations generated successfully!");
+        setTimeout(() => setSuccessMsg(null), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+      setMicError("Failed to auto-translate. Please try again.");
+      setTimeout(() => setMicError(null), 3000);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+
+  const toggleFavorite = (stableId) => {
+    setFavorites(prev => prev.includes(stableId) ? prev.filter(i => i !== stableId) : [...prev, stableId]);
+  };
+
+  const handlePoemSelect = (stableId) => {
     if (isRecording) stopRecording();
-    setSelectedPoemIndex(originalId);
+    setSelectedPoemId(stableId);
     setLanguageMode('hi');
     setMicError(null);
     setSuccessMsg(null);
@@ -824,20 +1119,18 @@ const App = () => {
   const handleRate = async (starValue) => {
     const activeUid = user ? user.uid : getLocalUid();
 
-    // 1. Immediately Save Locally (Optimistic Update)
     try {
       const localRatings = JSON.parse(localStorage.getItem('mera_sach_local_ratings') || '{}');
-      localRatings[selectedPoemIndex] = starValue;
+      localRatings[selectedPoemId] = starValue;
       localStorage.setItem('mera_sach_local_ratings', JSON.stringify(localRatings));
       
       setRatings(prev => {
-        const existing = prev[selectedPoemIndex] || { avg: 0, count: 0 };
+        const existing = prev[selectedPoemId] || { avg: 0, count: 0 };
         return {
           ...prev,
-          [selectedPoemIndex]: { 
+          [selectedPoemId]: { 
              ...existing, 
              userRating: starValue,
-             // Temporarily spoof the average for the UI if it's the first rating
              avg: existing.count === 0 ? starValue : existing.avg,
              count: existing.count === 0 ? 1 : existing.count
           }
@@ -849,11 +1142,9 @@ const App = () => {
       console.error("Local storage rating failed", e);
     }
 
-    // 2. Attempt to Sync to Cloud
     if (db && appId) {
       try {
-        const docRef = doc(db, 'mera_sach_ratings', `poem_${selectedPoemIndex}`);
-        // Use { merge: true } so we don't accidentally overwrite ratings from other users
+        const docRef = doc(db, 'mera_sach_ratings', `poem_${selectedPoemId}`);
         await setDoc(docRef, { [activeUid]: starValue }, { merge: true });
       } catch (error) {
         console.error("Rating cloud sync error:", error);
@@ -904,16 +1195,16 @@ const App = () => {
 
               setRecordings(prev => ({ 
                 ...prev, 
-                [selectedPoemIndex]: { url: base64data, type: blobType.includes('video') ? 'video' : 'audio', label: 'Local' } 
+                [selectedPoemId]: { url: base64data, type: blobType.includes('video') ? 'video' : 'audio', label: 'Local' } 
               }));
 
               try {
-                await saveAudioDB(selectedPoemIndex, base64data, blobType);
+                await saveAudioDB(selectedPoemId, base64data, blobType);
               } catch(e) { console.error("Local DB error:", e); }
 
               if (db && appId) {
                  try {
-                     const docRef = doc(db, 'mera_sach_audio', `poem_${selectedPoemIndex}`);
+                     const docRef = doc(db, 'mera_sach_audio', `poem_${selectedPoemId}`);
                      await setDoc(docRef, {
                        audioBase64: base64data,
                        mimeType: blobType,
@@ -962,10 +1253,10 @@ const App = () => {
 
   const handleDeleteRecording = async () => {
     try {
-      await deleteAudioDB(selectedPoemIndex);
-      setRecordings(p => { const n={...p}; delete n[selectedPoemIndex]; return n; });
+      await deleteAudioDB(selectedPoemId);
+      setRecordings(p => { const n={...p}; delete n[selectedPoemId]; return n; });
       if (db && appId) {
-        await deleteDoc(doc(db, 'mera_sach_audio', `poem_${selectedPoemIndex}`));
+        await deleteDoc(doc(db, 'mera_sach_audio', `poem_${selectedPoemId}`));
       } 
     } catch (e) {
       console.error("Failed to delete recording", e);
@@ -974,9 +1265,9 @@ const App = () => {
 
   const formatTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2, '0')}`;
 
-  const currentPoem = poems[selectedPoemIndex];
-  const currentMedia = recordings[selectedPoemIndex];
-  const currentRating = ratings[selectedPoemIndex];
+  const currentPoem = allPoems.find(p => p.stableId === selectedPoemId) || allPoems[0] || { title: "No Poems Left", content: "All poems deleted.", stableId: 'empty' };
+  const currentMedia = recordings[selectedPoemId];
+  const currentRating = ratings[selectedPoemId];
 
   const displayTitle = languageMode === 'en' ? (currentPoem.titleEn || currentPoem.title) : 
                        languageMode === 'ro' ? (currentPoem.titleTrans || currentPoem.title) : 
@@ -1011,19 +1302,25 @@ const App = () => {
               </div>
               <button className="lg:hidden p-2 text-slate-400" onClick={() => setIsSidebarOpen(false)}><X size={20}/></button>
             </div>
-            <div className="relative">
+            <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input type="text" placeholder="खोजें (Search...)" className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-900 rounded-xl text-sm outline-none transition-all focus:ring-1 focus:ring-red-400" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
+            {isAdmin && (
+              <button onClick={() => { setEditingPoemId(null); setIsAddModalOpen(true); }} className="w-full py-2 mb-2 bg-slate-800 dark:bg-slate-700 text-white rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors flex justify-center items-center gap-2">
+                <span className="text-lg leading-none mt-[-2px]">+</span> Upload New Poem
+              </button>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
             {filteredPoems.map((p) => {
-                const idx = p.originalId;
+                const idx = p.stableId;
+                const absoluteIndex = sortedPoems.findIndex(sp => sp.stableId === idx) + 1;
                 return (
-                    <button key={idx} onClick={() => handlePoemSelect(idx)} className={`w-full text-left p-4 rounded-xl flex justify-between items-center transition-all ${selectedPoemIndex === idx ? 'bg-red-50 dark:bg-red-950/30 text-red-600' : 'hover:bg-slate-100 dark:hover:bg-slate-900'}`}>
+                    <button key={idx} onClick={() => handlePoemSelect(idx)} className={`w-full text-left p-4 rounded-xl flex justify-between items-center transition-all ${selectedPoemId === idx ? 'bg-red-50 dark:bg-red-950/30 text-red-600' : 'hover:bg-slate-100 dark:hover:bg-slate-900'}`}>
                         <div className="flex flex-col max-w-[80%]">
-                           <span className="font-medium truncate">{languageMode === 'hi' ? p.title : (p.titleTrans || p.title)}</span>
+                           <span className="font-medium truncate">{absoluteIndex}. {languageMode === 'hi' ? p.title : (p.titleTrans || p.title)}</span>
                            {ratings[idx]?.avg > 0 && (
                              <span className="text-[10px] text-yellow-500 font-bold flex items-center mt-1">
                                <Star size={10} fill="currentColor" className="mr-1"/> {ratings[idx].avg.toFixed(1)}
@@ -1071,6 +1368,17 @@ const App = () => {
             )}
 
             <header className="mb-10 text-center relative">
+                
+                {/* EDIT AND DELETE BUTTONS - ONLY SHOW TO ADMIN */}
+                {isAdmin && currentPoem.stableId !== 'empty' && (
+                  <div className="flex justify-end gap-2 mb-4 absolute right-0 top-0">
+                    <button onClick={() => movePoemUp(currentPoem.stableId)} disabled={currentSortedIndex <= 0} className="p-2 text-slate-300 hover:text-indigo-500 disabled:opacity-30 transition-colors" title="Move Up"><ChevronUp size={18} /></button>
+                    <button onClick={() => movePoemDown(currentPoem.stableId)} disabled={currentSortedIndex >= sortedPoems.length - 1} className="p-2 text-slate-300 hover:text-indigo-500 disabled:opacity-30 transition-colors" title="Move Down"><ChevronDown size={18} /></button>
+                    <button onClick={() => handleEditClick(currentPoem)} className="p-2 text-slate-300 hover:text-blue-500 transition-colors" title="Edit Poem"><Edit size={18} /></button>
+                    <button onClick={() => setPoemToDelete(currentPoem.stableId)} className="p-2 text-slate-300 hover:text-red-500 transition-colors" title="Delete Poem"><Trash2 size={18} /></button>
+                  </div>
+                )}
+
                 {micError && (
                   <div className="absolute top-0 left-0 right-0 bg-red-50 dark:bg-red-900/30 p-4 rounded-2xl flex items-center gap-3 z-30 border border-red-200 dark:border-red-800 animate-in fade-in slide-in-from-top-4">
                     <AlertCircle className="text-red-500 shrink-0" size={20} />
@@ -1087,13 +1395,16 @@ const App = () => {
                 )}
                 
                 <div className="text-xs font-bold text-slate-400 mb-4 tracking-widest">
-                  RANK {currentSortedIndex + 1} OF {poems.length}
+                  POEM {currentSortedIndex + 1} OF {allPoems.length}
                 </div>
 
                 <div className="flex justify-center items-center gap-6 mb-8">
-                    <button onClick={() => toggleFavorite(selectedPoemIndex)} className={`p-1 transition-colors ${favorites.includes(selectedPoemIndex) ? 'text-red-500' : 'text-slate-300 hover:text-red-400'}`} title="Mark as favorite"><Heart size={22} fill={favorites.includes(selectedPoemIndex) ? "currentColor" : "none"} /></button>
-                    <button onClick={startRecording} className={`p-1 transition-colors ${isRecording ? 'text-red-500 scale-125' : 'text-slate-300 hover:text-red-500'}`} title="Record Voice"><Mic size={22} /></button>
+                    <button onClick={() => toggleFavorite(selectedPoemId)} className={`p-1 transition-colors ${favorites.includes(selectedPoemId) ? 'text-red-500' : 'text-slate-300 hover:text-red-400'}`} title="Mark as favorite"><Heart size={22} fill={favorites.includes(selectedPoemId) ? "currentColor" : "none"} /></button>
                     
+                    {isAdmin && (
+                      <button onClick={startRecording} className={`p-1 transition-colors ${isRecording ? 'text-red-500 scale-125' : 'text-slate-300 hover:text-red-500'}`} title="Record Voice"><Mic size={22} /></button>
+                    )}
+
                     <button 
                       onClick={() => setLanguageMode(languageMode === 'ro' ? 'hi' : 'ro')} 
                       className={`p-1 transition-all ${languageMode === 'ro' ? 'text-red-600 scale-110' : 'text-slate-300 hover:text-red-400'}`} 
@@ -1116,23 +1427,25 @@ const App = () => {
                 </h2>
 
                 {/* 3-STAR RATING SYSTEM UI */}
-                <div className="flex flex-col items-center justify-center gap-1 mb-6">
-                  <div className="flex gap-2">
-                    {[1, 2, 3].map(star => (
-                      <button 
-                        key={star} 
-                        onClick={() => handleRate(star)}
-                        className={`p-1.5 transition-transform hover:scale-110 active:scale-95 ${currentRating?.userRating >= star ? 'text-yellow-500' : 'text-slate-300 dark:text-slate-600'}`}
-                        title={`Rate ${star} Star${star > 1 ? 's' : ''}`}
-                      >
-                        <Star fill={currentRating?.userRating >= star ? "currentColor" : "none"} size={26} />
-                      </button>
-                    ))}
+                {currentPoem.stableId !== 'empty' && (
+                  <div className="flex flex-col items-center justify-center gap-1 mb-6">
+                    <div className="flex gap-2">
+                      {[1, 2, 3].map(star => (
+                        <button 
+                          key={star} 
+                          onClick={() => handleRate(star)}
+                          className={`p-1.5 transition-transform hover:scale-110 active:scale-95 ${currentRating?.userRating >= star ? 'text-yellow-500' : 'text-slate-300 dark:text-slate-600'}`}
+                          title={`Rate ${star} Star${star > 1 ? 's' : ''}`}
+                        >
+                          <Star fill={currentRating?.userRating >= star ? "currentColor" : "none"} size={26} />
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
+                      {currentRating?.avg ? `${currentRating.avg.toFixed(1)} ★ Average (${currentRating.count} Rating${currentRating.count !== 1 ? 's' : ''})` : 'Unrated - Be the first to rate!'}
+                    </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
-                    {currentRating?.avg ? `${currentRating.avg.toFixed(1)} ★ Average (${currentRating.count} Rating${currentRating.count !== 1 ? 's' : ''})` : 'Unrated - Be the first to rate!'}
-                  </span>
-                </div>
+                )}
 
             </header>
 
@@ -1143,7 +1456,9 @@ const App = () => {
                         <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest flex items-center gap-1">
                           <Cloud size={12} /> {currentMedia.label} audio
                         </span>
-                        <button onClick={handleDeleteRecording} className="text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                        {isAdmin && (
+                          <button onClick={handleDeleteRecording} className="text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                        )}
                     </div>
                     {currentMedia.type === 'video' ? (
                       <video src={currentMedia.url} controls className="w-full rounded-xl bg-black shadow-lg" />
@@ -1165,22 +1480,119 @@ const App = () => {
         {/* Navigation Controls follow the dynamically sorted array! */}
         <div className="mt-12 flex gap-4">
           <button 
-            disabled={currentSortedIndex === 0} 
-            onClick={() => setSelectedPoemIndex(sortedPoems[currentSortedIndex - 1].originalId)} 
+            disabled={currentSortedIndex <= 0} 
+            onClick={() => setSelectedPoemId(sortedPoems[currentSortedIndex - 1]?.stableId)} 
             className="px-8 py-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl disabled:opacity-30 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
           >
             Previous
           </button>
           
           <button 
-            disabled={currentSortedIndex === sortedPoems.length - 1} 
-            onClick={() => setSelectedPoemIndex(sortedPoems[currentSortedIndex + 1].originalId)} 
+            disabled={currentSortedIndex >= sortedPoems.length - 1} 
+            onClick={() => setSelectedPoemId(sortedPoems[currentSortedIndex + 1]?.stableId)} 
             className="px-8 py-3 bg-red-600 text-white rounded-2xl disabled:opacity-30 shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 transition-all font-medium"
           >
             Next Poem
           </button>
         </div>
       </main>
+
+      {/* Add / Edit Poem Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6">
+          <div className="bg-white dark:bg-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{editingPoemId ? "Edit Poem" : "Upload New Poem"}</h2>
+              <button onClick={() => {setIsAddModalOpen(false); setEditingPoemId(null);}} className="text-slate-400 hover:text-red-500 transition-colors"><X size={24} /></button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+              
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm text-indigo-800 dark:text-indigo-300">
+                  <span className="font-bold flex items-center gap-2 mb-1"><Sparkles size={16}/> AI Translation & Transliteration</span>
+                  Enter your poem in <b>any one language</b> (Hindi, Roman, or English), then let AI fill in the rest!
+                </div>
+                <button 
+                  onClick={autoTranslatePoem} 
+                  disabled={isTranslating}
+                  className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-md shadow-indigo-200 dark:shadow-none"
+                >
+                  {isTranslating ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
+                  {isTranslating ? "Translating..." : "Auto-Fill Now"}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Hindi Title *</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" placeholder="उदासी" value={newPoem.title} onChange={e => setNewPoem({...newPoem, title: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Roman Title</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" placeholder="Udaasi" value={newPoem.titleTrans} onChange={e => setNewPoem({...newPoem, titleTrans: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">English Title</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" placeholder="Sadness" value={newPoem.titleEn} onChange={e => setNewPoem({...newPoem, titleEn: e.target.value})} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Hindi Content *</label>
+                  <textarea rows={6} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none" placeholder="कविता यहाँ लिखें..." value={newPoem.content} onChange={e => setNewPoem({...newPoem, content: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Roman Content</label>
+                  <textarea rows={6} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none" placeholder="Kavita yahan likhein..." value={newPoem.contentTrans} onChange={e => setNewPoem({...newPoem, contentTrans: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">English Content</label>
+                  <textarea rows={6} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none" placeholder="Write poem here..." value={newPoem.contentEn} onChange={e => setNewPoem({...newPoem, contentEn: e.target.value})} />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Artwork Theme</label>
+                <select className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" value={newPoem.artworkTheme} onChange={e => setNewPoem({...newPoem, artworkTheme: e.target.value})}>
+                  <option value="barren">Barren</option>
+                  <option value="tomb">Tomb</option>
+                  <option value="lake">Lake</option>
+                  <option value="tree">Tree</option>
+                  <option value="tangle">Tangle</option>
+                  <option value="ravan">Ravan</option>
+                  <option value="umbrella">Umbrella</option>
+                  <option value="city">City</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
+              <button onClick={() => {setIsAddModalOpen(false); setEditingPoemId(null);}} className="px-6 py-2 rounded-xl text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+              <button onClick={handleSaveNewPoem} className="px-6 py-2 rounded-xl bg-red-600 text-white font-bold shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 transition-colors">{editingPoemId ? "Save Changes" : "Upload Poem"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Modal */}
+      {poemToDelete && (
+         <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+               <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={32} />
+               </div>
+               <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Delete Poem?</h3>
+               <p className="text-slate-500 dark:text-slate-400 mb-8">Are you sure you want to delete this poem? This action cannot be completely undone.</p>
+               
+               <div className="flex gap-3 justify-center">
+                 <button onClick={() => setPoemToDelete(null)} className="px-6 py-3 rounded-xl text-slate-600 dark:text-slate-300 font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
+                 <button onClick={confirmDeletePoem} className="px-6 py-3 rounded-xl bg-red-600 text-white font-bold shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 transition-colors">Yes, Delete</button>
+               </div>
+            </div>
+         </div>
+      )}
 
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
