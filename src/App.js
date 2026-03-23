@@ -132,6 +132,34 @@ const deleteAudioDB = async (poemId) => {
 // --------------------------------------------------------
 // GRAPHICS & CONTENT
 // --------------------------------------------------------
+
+// Simple artistic line border with a clean white background
+const ArtisticLineBorder = ({ darkMode }) => {
+  const lineColor = darkMode ? '#f87171' : '#ef4444'; // Vivid red border
+  const accentColor = darkMode ? '#fca5a5' : '#b91c1c'; // Deeper/Lighter red for accents
+
+  return (
+    <div className="absolute inset-0 pointer-events-none z-10 p-5">
+      <div 
+        className="w-full h-full rounded-[24px] relative"
+        style={{ border: `1.5px solid ${lineColor}` }}
+      >
+        <div 
+          className="absolute inset-[6px] rounded-[18px]"
+          style={{ border: `1.5px dashed ${lineColor}` }}
+        >
+          {/* Corner Accents (Little Diamonds) */}
+          <div className="absolute left-0 top-0 w-2 h-2 rotate-45 -translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: accentColor }} />
+          <div className="absolute right-0 top-0 w-2 h-2 rotate-45 translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: accentColor }} />
+          <div className="absolute left-0 bottom-0 w-2 h-2 rotate-45 -translate-x-1/2 translate-y-1/2" style={{ backgroundColor: accentColor }} />
+          <div className="absolute right-0 bottom-0 w-2 h-2 rotate-45 translate-x-1/2 translate-y-1/2" style={{ backgroundColor: accentColor }} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const PoemGraphic = ({ theme, darkMode }) => {
   const strokeColor = darkMode ? '#475569' : '#cbd5e1'; 
   const highlightColor = darkMode ? '#ef4444' : '#f87171';
@@ -139,7 +167,7 @@ const PoemGraphic = ({ theme, darkMode }) => {
 
   const graphics = {
     barren: (
-      <svg viewBox="0 0 400 200" className="w-full h-full opacity-60">
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
         <path d="M50,150 L350,150" stroke={strokeColor} strokeWidth="1" />
         <path d="M80,150 L75,135 M120,150 L125,140 M200,150 L195,130 M280,150 L285,138" stroke={strokeColor} strokeWidth="1" />
         <path d="M180,130 Q200,90 220,130" fill="none" stroke={highlightColor} strokeWidth="1" opacity="0.4" />
@@ -154,7 +182,7 @@ const PoemGraphic = ({ theme, darkMode }) => {
       </svg>
     ),
     tomb: (
-      <svg viewBox="0 0 400 200" className="w-full h-full opacity-50">
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
         <path d="M150,150 L250,150 M160,150 L160,110 Q160,80 200,80 Q240,80 240,110 L240,150" fill="none" stroke={strokeColor} strokeWidth="1.5" />
         <rect x="185" y="120" width="30" height="30" rx="1" fill="none" stroke={strokeColor} strokeWidth="0.5" />
         <path d="M100,150 C130,150 140,130 160,130" stroke={strokeColor} strokeWidth="0.8" opacity="0.5" />
@@ -162,7 +190,7 @@ const PoemGraphic = ({ theme, darkMode }) => {
       </svg>
     ),
     lake: (
-      <svg viewBox="0 0 400 200" className="w-full h-full opacity-60">
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
         <path d="M100,110 Q200,90 300,110" fill="none" stroke={strokeColor} strokeWidth="1" opacity="0.3" />
         <path d="M80,125 Q200,105 320,125" fill="none" stroke={strokeColor} strokeWidth="1" opacity="0.5" />
         <path d="M120,140 Q200,120 280,140" fill="none" stroke={strokeColor} strokeWidth="1" opacity="0.3" />
@@ -170,7 +198,7 @@ const PoemGraphic = ({ theme, darkMode }) => {
       </svg>
     ),
     tree: (
-      <svg viewBox="0 0 400 200" className="w-full h-full opacity-60">
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
         <path d="M200,160 L200,90 M200,130 L230,110 M200,120 L175,105" fill="none" stroke={strokeColor} strokeWidth="1.5" />
         <path d="M230,110 Q245,100 235,90 Q220,100 230,110" fill={leafColor} opacity="0.4" />
         <path d="M175,105 Q160,95 170,85 Q185,95 175,105" fill={leafColor} opacity="0.4" />
@@ -178,13 +206,13 @@ const PoemGraphic = ({ theme, darkMode }) => {
       </svg>
     ),
     tangle: (
-      <svg viewBox="0 0 400 200" className="w-full h-full opacity-50">
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
         <path d="M150,110 C160,70 190,150 210,90 S250,130 200,130 S140,90 200,70 S260,150 200,150 S120,110 150,110" fill="none" stroke={strokeColor} strokeWidth="1.2" />
         <path d="M180,110 L220,110 M200,90 L200,130" stroke={highlightColor} strokeWidth="0.5" opacity="0.3" />
       </svg>
     ),
     ravan: (
-      <svg viewBox="0 0 400 200" className="w-full h-full opacity-50">
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
         {[...Array(10)].map((_, i) => (
           <circle key={i} cx={110 + i * 20} cy={90 + Math.sin(i) * 5} r="2" fill={strokeColor} opacity="0.5" />
         ))}
@@ -193,7 +221,7 @@ const PoemGraphic = ({ theme, darkMode }) => {
       </svg>
     ),
     umbrella: (
-      <svg viewBox="0 0 400 200" className="w-full h-full opacity-60">
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
         <path d="M170,120 Q200,80 230,120" fill="none" stroke={strokeColor} strokeWidth="2" />
         <path d="M200,120 L200,140 Q200,145 205,145" fill="none" stroke={strokeColor} strokeWidth="1.5" />
         <line x1="160" y1="70" x2="155" y2="90" stroke={highlightColor} strokeWidth="0.8" opacity="0.4" />
@@ -202,7 +230,7 @@ const PoemGraphic = ({ theme, darkMode }) => {
       </svg>
     ),
     city: (
-      <svg viewBox="0 0 400 200" className="w-full h-full opacity-50">
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
         <path d="M100,150 L300,150" stroke={strokeColor} strokeWidth="1" />
         <path d="M150,150 L150,90 L140,90 L160,90" fill="none" stroke={strokeColor} strokeWidth="1.5" />
         <circle cx="150" cy="85" r="5" fill={highlightColor} opacity="0.3" />
@@ -1433,17 +1461,19 @@ const App = () => {
           <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full hover:scale-110 transition-transform">{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button>
         </div>
 
-        <article className="max-w-3xl w-full bg-white dark:bg-slate-800/40 p-8 lg:p-16 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 relative overflow-hidden group">
+        <article className="max-w-3xl w-full min-h-[600px] p-12 lg:px-20 lg:py-24 bg-white dark:bg-slate-800/80 shadow-2xl rounded-[2.5rem] border border-slate-100 dark:border-slate-700 relative flex flex-col group overflow-hidden">
           
+          <ArtisticLineBorder darkMode={darkMode} />
+
           {/* BACKGROUND GRAPHIC */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 overflow-hidden">
             <div className="w-[80%] h-[60%] transform transition-transform duration-1000 group-hover:scale-105">
                 <PoemGraphic theme={currentPoem.artworkTheme} darkMode={darkMode} />
             </div>
           </div>
 
           {/* Foreground Content */}
-          <div className="relative z-10">
+          <div className="relative z-20 w-full h-full flex flex-col">
             {/* FLOATING RECORDING BAR */}
             {isRecording && (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-red-200 dark:border-red-900/30 flex items-center gap-6 animate-in slide-in-from-top-4 duration-300 ring-2 ring-red-500/20">
@@ -1594,7 +1624,7 @@ const App = () => {
               </div>
             )}
 
-            <footer className="mt-20 pt-8 border-t border-slate-100 dark:border-slate-700 text-center text-slate-400 italic text-sm">संदीप ढींगरा - "मेरा सच"</footer>
+            <footer className="mt-20 pt-8 border-t border-slate-100 dark:border-slate-700 text-center text-slate-400 italic text-sm mt-auto">संदीप ढींगरा - "मेरा सच"</footer>
           </div>
         </article>
 
