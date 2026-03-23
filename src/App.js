@@ -135,13 +135,13 @@ const deleteAudioDB = async (poemId) => {
 
 // Simple artistic line border with a clean white background
 const ArtisticLineBorder = ({ darkMode }) => {
-  const lineColor = darkMode ? '#475569' : '#cbd5e1'; // Grey border
+  const lineColor = darkMode ? '#475569' : '#cbd5e1'; // Solid Grey border
 
   return (
     <div className="absolute inset-0 pointer-events-none z-10 p-5">
       <div 
-        className="w-full h-full rounded-[24px] relative"
-        style={{ border: `3px solid ${lineColor}` }}
+        className="w-full h-full rounded-[24px]"
+        style={{ border: `2px solid ${lineColor}` }} // 1 thick solid line
       >
       </div>
     </div>
@@ -280,7 +280,7 @@ const INITIAL_POEMS = [
     content: "ये साली ज़िंदगी ...\nबेतरतीब बंधी डोर की तरह\nउलझती सी रहती है\n\nहर वक़्त, हर तरफ, हर जगह\nकुछ ढूँढती सी रहती है\n\nशराब दोनों जहां की पी कर भी\nहर दम प्यासी रहती है\n\nना बहकती है\nना संभलती है\n\nना पूरी बुझती है\nना खुल के जलती है\n\nना मेरी होती है\nना तेरी बनती है\n\nकिसी अपने की बेवजह बेवफाई की तरह\nदिल के भीतर कुछ कसमसाती सी रहती है\n\nये साली ज़िंदगी ...",
     contentTrans: "Ye saali zindagi...\nBetarteeb bandhi dor ki tarah\nUlajhti si rehti hai\n\nHar waqt, har taraf, har jagah\nKuchh dhoondhti si rehti hai\n\nSharaab dono jahan ki pee kar bhi\nHar dam pyaasi rehti hai\n\nNa behakti hai\nNa sambhalti hai\n\nNa poori bujhti hai\nNa khul ke jalti hai\n\nNa meri hoti hai\nNa teri banti hai\n\nKisi apne ki bewajah bewafai ki tarah\nDil ke bheetar kuchh kasmasaati si rehti hai\n\nYe saali zindagi...",
     contentEn: "This wretched life...\nLike a haphazardly tied string\nIt remains tangled\n\nAll the time, in every direction, everywhere\nIt keeps searching for something\n\nEven after drinking the wine of both worlds\nIt remains thirsty every moment\n\nNeither does it wander off\nNor does it steady itself\n\nNeither is it fully extinguished\nNor does it burn brightly\n\nNeither does it become mine\nNor does it belong to you\n\nLike the needless betrayal of a loved one\nIt keeps restless within the heart\n\nThis wretched life...",
-    tags: ["ज़िंदगी", "शायरी"],
+    tags: ["ज़ ज़िंदगी", "शायरी"],
     artworkTheme: "tangle"
   },
   {
@@ -646,8 +646,9 @@ const App = () => {
   const [poemAnalysis, setPoemAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
-  // NEW: Admin state to hide/show edit features
+  // Admin state to hide/show edit features
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminClickCount, setAdminClickCount] = useState(0);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -920,6 +921,19 @@ const App = () => {
   // --------------------------------------------------------
   // POEM ADD / EDIT / DELETE / MOVE ACTIONS
   // --------------------------------------------------------
+
+  const handleFooterClick = () => {
+    setAdminClickCount(prev => prev + 1);
+    if (adminClickCount >= 4) { // 5 total clicks required
+        setIsAdmin(!isAdmin);
+        setAdminClickCount(0);
+        if (!isAdmin) {
+          localStorage.setItem('mera_sach_admin', 'true');
+        } else {
+          localStorage.removeItem('mera_sach_admin');
+        }
+    }
+  };
 
   const movePoemUp = async (stableId) => {
     if (!db) return;
@@ -1390,7 +1404,7 @@ const App = () => {
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
 
       {/* Header for Mobile */}
-      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between p-4 bg-inherit border-b border-slate-200 dark:border-slate-800 backdrop-blur-md">
+      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between p-4 bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 backdrop-blur-md">
         <button onClick={() => setIsSidebarOpen(true)} className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg font-bold transition-transform active:scale-95">
           <Menu size={20} />
           <span className="text-sm">Poem List</span>
@@ -1595,8 +1609,8 @@ const App = () => {
                 </div>
             )}
 
-            {/* Poem Text Layer */}
-            <div className={`poem-content whitespace-pre-wrap leading-[1.8] text-center transition-all duration-700 drop-shadow-sm opacity-100 ${languageMode === 'en' ? 'text-lg lg:text-xl font-sans italic text-slate-700 dark:text-slate-300' : languageMode === 'ro' ? 'text-lg lg:text-xl font-sans text-slate-800 dark:text-slate-200 font-medium' : 'text-xl lg:text-2xl font-hindi text-slate-800 dark:text-slate-100'}`}>
+            {/* Poem Text Layer (Removed transition-all to prevent jumbled overlap during state changes) */}
+            <div className={`poem-content whitespace-pre-wrap leading-[1.8] text-center drop-shadow-sm opacity-100 ${languageMode === 'en' ? 'text-lg lg:text-xl font-sans italic text-slate-700 dark:text-slate-300' : languageMode === 'ro' ? 'text-lg lg:text-xl font-sans text-slate-800 dark:text-slate-200 font-medium' : 'text-xl lg:text-2xl font-hindi text-slate-800 dark:text-slate-100'}`}>
                 {displayContent}
             </div>
             
@@ -1613,7 +1627,9 @@ const App = () => {
               </div>
             )}
 
-            <footer className="mt-20 pt-8 border-t border-slate-100 dark:border-slate-700 text-center text-slate-400 italic text-sm mt-auto">संदीप ढींगरा - "मेरा सच"</footer>
+            <footer onClick={handleFooterClick} className="mt-20 pt-8 border-t border-slate-100 dark:border-slate-700 text-center text-slate-400 italic text-sm mt-auto select-none cursor-pointer">
+              संदीप ढींगरा - "मेरा सच"
+            </footer>
           </div>
         </article>
 
