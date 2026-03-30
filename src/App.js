@@ -154,6 +154,124 @@ const uploadAudioToCloud = async (dbInstance, poemId, base64data, mimeType) => {
 };
 
 // --------------------------------------------------------
+// AUDIO FORMAT TRANSCODERS
+// --------------------------------------------------------
+
+const encodeToWav = (audioBuffer) => {
+  const numChannels = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  const format = 1; // PCM
+  const bitDepth = 16;
+  
+  let result;
+  if (numChannels === 2) {
+      const left = audioBuffer.getChannelData(0);
+      const right = audioBuffer.getChannelData(1);
+      result = new Float32Array(left.length * 2);
+      for (let i = 0; i < left.length; i++) {
+          result[i * 2] = left[i];
+          result[i * 2 + 1] = right[i];
+      }
+  } else {
+      result = audioBuffer.getChannelData(0);
+  }
+
+  const dataLength = result.length * (bitDepth / 8);
+  const bufferLen = 44 + dataLength;
+  const arrayBuffer = new ArrayBuffer(bufferLen);
+  const view = new DataView(arrayBuffer);
+
+  const writeString = (view, offset, string) => {
+      for (let i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+      }
+  };
+
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + dataLength, true);
+  writeString(view, 8, 'WAVE');
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, format, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
+  view.setUint16(32, numChannels * (bitDepth / 8), true);
+  view.setUint16(34, bitDepth, true);
+  writeString(view, 36, 'data');
+  view.setUint32(40, dataLength, true);
+
+  let offset = 44;
+  for (let i = 0; i < result.length; i++) {
+      const s = Math.max(-1, Math.min(1, result[i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      offset += 2;
+  }
+  return new Blob([view], { type: 'audio/wav' });
+};
+
+const encodeToMp3 = async (audioBuffer) => {
+  return new Promise((resolve, reject) => {
+      const encode = () => {
+          try {
+              const channels = audioBuffer.numberOfChannels;
+              const sampleRate = audioBuffer.sampleRate;
+              const mp3encoder = new window.lamejs.Mp3Encoder(channels, sampleRate, 128);
+              const mp3Data = [];
+
+              const left = audioBuffer.getChannelData(0);
+              const right = channels > 1 ? audioBuffer.getChannelData(1) : left;
+
+              const sampleBlockSize = 1152;
+              const leftInt16 = new Int16Array(left.length);
+              const rightInt16 = new Int16Array(right.length);
+
+              for (let i = 0; i < left.length; i++) {
+                  const s = Math.max(-1, Math.min(1, left[i]));
+                  leftInt16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                  if (channels > 1) {
+                       const sR = Math.max(-1, Math.min(1, right[i]));
+                       rightInt16[i] = sR < 0 ? sR * 0x8000 : sR * 0x7FFF;
+                  }
+              }
+
+              for (let i = 0; i < leftInt16.length; i += sampleBlockSize) {
+                  const leftChunk = leftInt16.subarray(i, i + sampleBlockSize);
+                  let mp3buf;
+                  if (channels > 1) {
+                       const rightChunk = rightInt16.subarray(i, i + sampleBlockSize);
+                       mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+                  } else {
+                       mp3buf = mp3encoder.encodeBuffer(leftChunk);
+                  }
+                  if (mp3buf.length > 0) {
+                      mp3Data.push(mp3buf);
+                  }
+              }
+
+              const mp3buf = mp3encoder.flush();
+              if (mp3buf.length > 0) {
+                  mp3Data.push(new Int8Array(mp3buf));
+              }
+              resolve(new Blob(mp3Data, { type: 'audio/mp3' }));
+          } catch(e) {
+              reject(e);
+          }
+      };
+
+      if (!window.lamejs) {
+          const script = document.createElement('script');
+          script.src = "https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js";
+          script.onload = encode;
+          script.onerror = reject;
+          document.head.appendChild(script);
+      } else {
+          encode();
+      }
+  });
+};
+
+// --------------------------------------------------------
 // GRAPHICS & CONTENT
 // --------------------------------------------------------
 
@@ -170,6 +288,90 @@ const ArtisticLineBorder = ({ darkMode }) => {
       </div>
     </div>
   );
+};
+
+
+const PoemGraphic = ({ theme, darkMode }) => {
+  const strokeColor = darkMode ? '#475569' : '#cbd5e1'; 
+  const highlightColor = darkMode ? '#ef4444' : '#f87171';
+  const leafColor = darkMode ? '#10b981' : '#34d399'; 
+
+  const graphics = {
+    barren: (
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
+        <path d="M50,150 L350,150" stroke={strokeColor} strokeWidth="1" />
+        <path d="M80,150 L75,135 M120,150 L125,140 M200,150 L195,130 M280,150 L285,138" stroke={strokeColor} strokeWidth="1" />
+        <path d="M180,130 Q200,90 220,130" fill="none" stroke={highlightColor} strokeWidth="1" opacity="0.4" />
+        <path d="M190,125 Q200,105 210,125" fill="none" stroke={highlightColor} strokeWidth="1" opacity="0.6" />
+        <circle cx="200" cy="150" r="60" fill={`url(#grad-barren-${darkMode})`} opacity="0.1" />
+        <defs>
+          <radialGradient id={`grad-barren-${darkMode}`}>
+            <stop offset="0%" stopColor={highlightColor} />
+            <stop offset="100%" stopColor="transparent" />
+          </radialGradient>
+        </defs>
+      </svg>
+    ),
+    tomb: (
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
+        <path d="M150,150 L250,150 M160,150 L160,110 Q160,80 200,80 Q240,80 240,110 L240,150" fill="none" stroke={strokeColor} strokeWidth="1.5" />
+        <rect x="185" y="120" width="30" height="30" rx="1" fill="none" stroke={strokeColor} strokeWidth="0.5" />
+        <path d="M100,150 C130,150 140,130 160,130" stroke={strokeColor} strokeWidth="0.8" opacity="0.5" />
+        <circle cx="200" cy="100" r="3" fill={highlightColor} opacity="0.4" />
+      </svg>
+    ),
+    lake: (
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
+        <path d="M100,110 Q200,90 300,110" fill="none" stroke={strokeColor} strokeWidth="1" opacity="0.3" />
+        <path d="M80,125 Q200,105 320,125" fill="none" stroke={strokeColor} strokeWidth="1" opacity="0.5" />
+        <path d="M120,140 Q200,120 280,140" fill="none" stroke={strokeColor} strokeWidth="1" opacity="0.3" />
+        <path d="M180,90 C190,70 210,70 220,90 S240,110 250,90" fill="none" stroke={highlightColor} strokeWidth="1.5" opacity="0.4" />
+      </svg>
+    ),
+    tree: (
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
+        <path d="M200,160 L200,90 M200,130 L230,110 M200,120 L175,105" fill="none" stroke={strokeColor} strokeWidth="1.5" />
+        <path d="M230,110 Q245,100 235,90 Q220,100 230,110" fill={leafColor} opacity="0.4" />
+        <path d="M175,105 Q160,95 170,85 Q185,95 175,105" fill={leafColor} opacity="0.4" />
+        <path d="M200,90 Q215,80 205,70 Q190,80 200,90" fill={leafColor} opacity="0.6" />
+      </svg>
+    ),
+    tangle: (
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
+        <path d="M150,110 C160,70 190,150 210,90 S250,130 200,130 S140,90 200,70 S260,150 200,150 S120,110 150,110" fill="none" stroke={strokeColor} strokeWidth="1.2" />
+        <path d="M180,110 L220,110 M200,90 L200,130" stroke={highlightColor} strokeWidth="0.5" opacity="0.3" />
+      </svg>
+    ),
+    ravan: (
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
+        {[...Array(10)].map((_, i) => (
+          <circle key={i} cx={110 + i * 20} cy={90 + Math.sin(i) * 5} r="2" fill={strokeColor} opacity="0.5" />
+        ))}
+        <path d="M180,140 Q200,90 220,140" fill="none" stroke={highlightColor} strokeWidth="1.5" opacity="0.5" />
+        <path d="M190,135 L210,135" stroke={strokeColor} strokeWidth="0.5" />
+      </svg>
+    ),
+    umbrella: (
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
+        <path d="M170,120 Q200,80 230,120" fill="none" stroke={strokeColor} strokeWidth="2" />
+        <path d="M200,120 L200,140 Q200,145 205,145" fill="none" stroke={strokeColor} strokeWidth="1.5" />
+        <line x1="160" y1="70" x2="155" y2="90" stroke={highlightColor} strokeWidth="0.8" opacity="0.4" />
+        <line x1="240" y1="60" x2="235" y2="80" stroke={highlightColor} strokeWidth="0.8" opacity="0.4" />
+        <line x1="210" y1="90" x2="205" y2="110" stroke={highlightColor} strokeWidth="0.8" opacity="0.4" />
+      </svg>
+    ),
+    city: (
+      <svg viewBox="0 0 400 200" className="w-full h-full opacity-30">
+        <path d="M100,150 L300,150" stroke={strokeColor} strokeWidth="1" />
+        <path d="M150,150 L150,90 L140,90 L160,90" fill="none" stroke={strokeColor} strokeWidth="1.5" />
+        <circle cx="150" cy="85" r="5" fill={highlightColor} opacity="0.3" />
+        <path d="M250,150 L250,130" stroke={strokeColor} strokeWidth="1" />
+        <rect x="245" y="125" width="10" height="5" fill="none" stroke={strokeColor} strokeWidth="0.5" />
+      </svg>
+    )
+  };
+
+  return <div className="w-full h-full">{graphics[theme] || graphics.barren}</div>;
 };
 
 const INITIAL_POEMS = [
@@ -458,7 +660,7 @@ const INITIAL_POEMS = [
     titleTrans: "Barsaat",
     titleEn: "Rain",
     content: "दर्द-दस्तक दरो-दीवार से आती है\nदिले-बेबस से फ़रियाद सी आती है\nयाद की एक बूँद रुला जाती है हमें\nऔर तेरी यादों की बरसात सी आती है",
-    contentTrans: "Dard-dastak dar-o-deewar se aati hai\nDil-e-bebas se fariyaad si aati hai\nYaad ki ek boond rula jaati hai humein\nAur teri yaadon ki बरसात si aati hai",
+    contentTrans: "Dard-dastak dar-o-deewar se aati hai\nDil-e-bebas se fariyaad si aati hai\nYaad ki ek boond rula jaati hai humein\nAur teri yaadon ki barsaat si aati hai",
     contentEn: "The knock of pain comes from the doors and walls\nA plea comes from the helpless heart\nA single drop of memory makes us cry\nAnd then a rain of your memories comes"
   },
   {
@@ -474,7 +676,8 @@ const INITIAL_POEMS = [
 const App = () => {
   const [user, setUser] = useState(null);
   
-  const [selectedPoemId, setSelectedPoemId] = useState('0');
+  // selectedPoemIndex serves as the persistent original ID (0 to 36)
+  const [selectedPoemIndex, setSelectedPoemIndex] = useState(0);
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -524,31 +727,44 @@ const App = () => {
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
 
+  // ALL POEMS MERGE (Originals + Custom Uploads + Overrides)
+  const allPoems = useMemo(() => {
+    // Separate pure new custom poems and those overriding an original poem
+    const pureCustom = customPoems.filter(p => p.overridesOriginal === undefined || p.overridesOriginal === null);
+    const overrides = customPoems.filter(p => p.overridesOriginal !== undefined && p.overridesOriginal !== null);
+    
+    // Process original hardcoded poems
+    const base = INITIAL_POEMS.map((p, idx) => {
+       const stableId = String(idx);
+       
+       // Hide if marked as deleted globally
+       if (deletedOriginals.includes(stableId)) return null;
+
+       // If it has been edited, use the cloud version but keep the stable original ID
+       const override = overrides.find(o => o.overridesOriginal === stableId);
+       if (override) return { ...override, stableId }; 
+       
+       return { ...p, stableId };
+    }).filter(Boolean); // Remove nulls (deleted ones)
+
+    // Map pure custom poems to use their cloud Document ID as their stableId
+    const mappedCustom = pureCustom.map(p => ({ ...p, stableId: p.id }));
+
+    return [...base, ...mappedCustom];
+  }, [customPoems, deletedOriginals]);
+
   useEffect(() => {
-    // Ensure Tailwind uses class-based dark mode
+    // Ensure Tailwind uses class-based dark mode to match the preview environment exactly
     window.tailwind = window.tailwind || {};
     window.tailwind.config = {
       darkMode: 'class'
     };
 
+    // Fallback: Inject Tailwind CSS if the host environment missed it.
     if (!document.querySelector('script[src*="tailwindcss"]')) {
       const script = document.createElement('script');
       script.src = "https://cdn.tailwindcss.com";
       document.head.appendChild(script);
-    }
-
-    // CHECK FOR SECRET ADMIN LINK
-    const params = new URLSearchParams(window.location.search);
-    const adminParam = params.get('admin');
-    
-    if (adminParam === 'true') {
-      localStorage.setItem('mera_sach_admin', 'true');
-      setIsAdmin(true);
-    } else if (adminParam === 'false') {
-      localStorage.removeItem('mera_sach_admin');
-      setIsAdmin(false);
-    } else if (localStorage.getItem('mera_sach_admin') === 'true') {
-      setIsAdmin(true);
     }
   }, []);
 
@@ -577,8 +793,8 @@ const App = () => {
       try {
         const locals = await getAllAudioDB();
         const localRecordings = {};
-        for (const [idxStr, data] of Object.entries(locals)) {
-          localRecordings[idxStr] = {
+        for (const [idx, data] of Object.entries(locals)) {
+          localRecordings[idx] = {
             url: data.audioBase64,
             type: data.mimeType && data.mimeType.includes('video') ? 'video' : 'audio',
             label: 'Local'
@@ -592,21 +808,11 @@ const App = () => {
     loadLocal();
   }, []);
 
-  // 2. Fetch data from Firebase Firestore
+  // 2. Fetch recordings AND ratings from Firebase Firestore
   useEffect(() => {
     if (!db || !appId) return; 
 
     const activeUid = user ? user.uid : getLocalUid();
-
-    // SYSTEM SETTINGS (for hiding deleted originals & custom ordering)
-    const settingsRef = doc(db, 'mera_sach_settings', 'system');
-    const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
-      if (docSnap.exists()) {
-         const data = docSnap.data();
-         setDeletedOriginals(data.deletedOriginals || []);
-         setPoemOrder(data.poemOrder || []);
-      }
-    }, (error) => console.error("Firestore settings sub error:", error));
 
     // AUDIO
     const recordingsRef = collection(db, 'mera_sach_audio');
@@ -614,8 +820,8 @@ const App = () => {
       const newRecordings = {};
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data();
-        const rawId = docSnap.id.replace('poem_', '');
-        newRecordings[rawId] = {
+        const poemIndex = parseInt(docSnap.id.replace('poem_', ''), 10);
+        newRecordings[poemIndex] = {
           url: data.audioBase64,
           type: data.mimeType && data.mimeType.includes('video') ? 'video' : 'audio',
           label: 'Cloud'
@@ -624,50 +830,18 @@ const App = () => {
       setRecordings(prev => ({ ...prev, ...newRecordings }));
     }, (error) => console.error("Firestore audio sub error:", error));
 
-    // AUDIO CHUNKS (V2 - Large Files Support)
-    const metaRef = collection(db, 'mera_sach_audio_meta');
-    const unsubMeta = onSnapshot(metaRef, async (snapshot) => {
-      for (const docSnap of snapshot.docs) {
-        const poemId = docSnap.id.replace('poem_', '');
-        const meta = docSnap.data();
-        
-        try {
-          const chunkPromises = [];
-          for (let i = 0; i < meta.numChunks; i++) {
-            chunkPromises.push(getDoc(doc(db, 'mera_sach_audio_chunks', `poem_${poemId}_${i}`)));
-          }
-          const chunkSnaps = await Promise.all(chunkPromises);
-          let fullBase64 = "";
-          chunkSnaps.forEach(snap => {
-            if (snap.exists()) fullBase64 += snap.data().data;
-          });
-          
-          if (fullBase64) {
-            setRecordings(prev => ({
-              ...prev,
-              [poemId]: {
-                url: fullBase64,
-                type: meta.mimeType.includes('video') ? 'video' : 'audio',
-                label: 'Cloud'
-              }
-            }));
-          }
-        } catch (e) {
-          console.error("Error fetching audio chunks for poem", poemId, e);
-        }
-      }
-    }, (error) => console.error("Firestore meta sub error:", error));
-
     // RATINGS
     const ratingsRef = collection(db, 'mera_sach_ratings');
     const unsubRatings = onSnapshot(ratingsRef, (snapshot) => {
       const newRatings = {};
+      
+      // Pull local ratings to merge with cloud just in case
       const localRatingsRaw = localStorage.getItem('mera_sach_local_ratings');
       const localRatings = localRatingsRaw ? JSON.parse(localRatingsRaw) : {};
 
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data();
-        const rawId = docSnap.id.replace('poem_', '');
+        const poemIndex = parseInt(docSnap.id.replace('poem_', ''), 10);
         
         let totalStars = 0;
         let count = 0;
@@ -681,133 +855,88 @@ const App = () => {
           }
         }
         
-        if (!currentUserRating && localRatings[rawId]) {
-            currentUserRating = localRatings[rawId];
+        // Merge with local if cloud doesn't have the user's rating yet
+        if (!currentUserRating && localRatings[poemIndex]) {
+            currentUserRating = localRatings[poemIndex];
             totalStars += currentUserRating;
             count++;
         }
         
-        newRatings[rawId] = {
+        newRatings[poemIndex] = {
           avg: count > 0 ? totalStars / count : 0,
           count: count,
           userRating: currentUserRating
         };
       });
 
+      // Inject any purely local ratings that haven't made it to the cloud yet
       for (const [idxStr, starVal] of Object.entries(localRatings)) {
-        if (!newRatings[idxStr]) {
-           newRatings[idxStr] = { avg: starVal, count: 1, userRating: starVal };
+        const idx = parseInt(idxStr, 10);
+        if (!newRatings[idx]) {
+           newRatings[idx] = { avg: starVal, count: 1, userRating: starVal };
         }
       }
 
       setRatings(newRatings);
     }, (error) => {
       console.error("Firestore rating sub error:", error);
+      // Fallback to pure local ratings if Firestore is denied
       const localRatingsRaw = localStorage.getItem('mera_sach_local_ratings');
       if (localRatingsRaw) {
           const localRatings = JSON.parse(localRatingsRaw);
           const fallbackRatings = {};
           for (const [idxStr, starVal] of Object.entries(localRatings)) {
-              fallbackRatings[idxStr] = { avg: starVal, count: 1, userRating: starVal };
+              fallbackRatings[parseInt(idxStr, 10)] = { avg: starVal, count: 1, userRating: starVal };
           }
           setRatings(prev => ({ ...fallbackRatings, ...prev }));
       }
     });
 
-    // CUSTOM POEMS
-    const poemsRef = collection(db, 'mera_sach_custom_poems');
-    const unsubPoems = onSnapshot(poemsRef, (snapshot) => {
-      const loaded = [];
-      snapshot.docs.forEach(docSnap => {
-        loaded.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      loaded.sort((a, b) => a.createdAt - b.createdAt);
-      setCustomPoems(loaded);
-    }, (error) => console.error("Firestore custom poems sub error:", error));
-
     return () => {
-      unsubSettings();
       unsubAudio();
-      unsubMeta();
       unsubRatings();
-      unsubPoems();
     };
   }, [user]);
-
-  // ALL POEMS MERGE (Originals + Custom Uploads + Overrides)
-  const allPoems = useMemo(() => {
-    // Separate pure new custom poems and those overriding an original poem
-    const pureCustom = customPoems.filter(p => p.overridesOriginal === undefined || p.overridesOriginal === null);
-    const overrides = customPoems.filter(p => p.overridesOriginal !== undefined && p.overridesOriginal !== null);
-    
-    // Process original hardcoded poems
-    const base = INITIAL_POEMS.map((p, idx) => {
-       const stableId = String(idx);
-       
-       // Hide if marked as deleted globally
-       if (deletedOriginals.includes(stableId)) return null;
-
-       // If it has been edited, use the cloud version but keep the stable original ID
-       const override = overrides.find(o => o.overridesOriginal === stableId);
-       if (override) return { ...override, stableId }; 
-       
-       return { ...p, stableId };
-    }).filter(Boolean); // Remove nulls (deleted ones)
-
-    // Map pure custom poems to use their cloud Document ID as their stableId
-    const mappedCustom = pureCustom.map(p => ({ ...p, stableId: p.id }));
-
-    return [...base, ...mappedCustom];
-  }, [customPoems, deletedOriginals]);
-
 
   // Sync URL safely
   useEffect(() => {
     try {
       if (window.location.protocol === 'blob:' || window.location.origin === 'null') return;
       const params = new URLSearchParams(window.location.search);
-      const poemIdStr = params.get('poem');
-      if (poemIdStr !== null) {
-        setSelectedPoemId(poemIdStr);
+      const poemIndexStr = params.get('poem');
+      if (poemIndexStr !== null) {
+        const index = parseInt(poemIndexStr, 10);
+        if (!isNaN(index) && index >= 0 && index < allPoems.length) {
+          setSelectedPoemIndex(index);
+        }
       }
     } catch (err) {
       console.warn("Could not read URL params:", err);
     }
-  }, []);
+  }, [allPoems.length]);
 
   useEffect(() => {
     try {
       if (window.location.protocol === 'blob:' || window.location.origin === 'null') return;
       const url = new URL(window.location);
-      url.searchParams.set('poem', selectedPoemId);
+      url.searchParams.set('poem', selectedPoemIndex);
       window.history.pushState({}, '', url);
     } catch (err) {
       console.warn("History pushState blocked in this environment.");
     }
-  }, [selectedPoemId]);
+  }, [selectedPoemIndex]);
 
 
-  // DYNAMIC SORTING Logic: Sorts by custom manual order, then falls back to global star rating.
+  // DYNAMIC SORTING Logic: Maps the poems to their original index, then sorts by global star rating.
   const sortedPoems = useMemo(() => {
-    const currentOrder = [...poemOrder];
-    return [...allPoems].sort((a, b) => {
-        let indexA = currentOrder.indexOf(a.stableId);
-        let indexB = currentOrder.indexOf(b.stableId);
-        
-        // If not explicitly ordered yet, append to the bottom
-        if (indexA === -1) indexA = Number.MAX_SAFE_INTEGER;
-        if (indexB === -1) indexB = Number.MAX_SAFE_INTEGER;
-
-        if (indexA !== indexB) {
-            return indexA - indexB;
-        }
-
-        // Fallback for ties (newly added poems) - by rating
-        const avgA = ratings[a.stableId]?.avg || 0;
-        const avgB = ratings[b.stableId]?.avg || 0;
-        return avgB - avgA || String(a.stableId).localeCompare(String(b.stableId)); 
-    });
-  }, [ratings, allPoems, poemOrder]);
+    return allPoems.map((p, idx) => ({ ...p, originalId: idx }))
+                .sort((a, b) => {
+                  const avgA = ratings[a.originalId]?.avg || 0;
+                  const avgB = ratings[b.originalId]?.avg || 0;
+                  // If ratings are tied, fallback to original order
+                  return avgB - avgA || a.originalId - b.originalId; 
+                });
+  }, [ratings, allPoems]);
 
   const filteredPoems = useMemo(() => {
     return sortedPoems.filter(p => 
@@ -820,283 +949,42 @@ const App = () => {
 
   // Find the exact rank/position of the actively viewed poem in the newly sorted array
   const currentSortedIndex = useMemo(() => {
-    return sortedPoems.findIndex(p => p.stableId === selectedPoemId);
-  }, [sortedPoems, selectedPoemId]);
+    return sortedPoems.findIndex(p => p.originalId === selectedPoemIndex);
+  }, [sortedPoems, selectedPoemIndex]);
 
-  // --------------------------------------------------------
-  // POEM ADD / EDIT / DELETE / MOVE ACTIONS
-  // --------------------------------------------------------
 
-  const handleFooterClick = () => {
-    setAdminClickCount(prev => prev + 1);
-    if (adminClickCount >= 4) { // 5 total clicks required
-        setIsAdmin(!isAdmin);
-        setAdminClickCount(0);
-        if (!isAdmin) {
-          localStorage.setItem('mera_sach_admin', 'true');
-        } else {
-          localStorage.removeItem('mera_sach_admin');
-        }
-    }
+  const toggleFavorite = (index) => {
+    setFavorites(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]);
   };
 
-  const movePoemUp = async (stableId) => {
-    if (!db) return;
-    const idx = sortedPoems.findIndex(p => p.stableId === stableId);
-    if (idx <= 0) return; // already at the top
-
-    // Map the current visual order into a flat array of IDs
-    const newOrder = sortedPoems.map(p => p.stableId);
-    // Swap elements
-    [newOrder[idx - 1], newOrder[idx]] = [newOrder[idx], newOrder[idx - 1]];
-    
-    try {
-       await setDoc(doc(db, 'mera_sach_settings', 'system'), { poemOrder: newOrder }, { merge: true });
-    } catch(e) { console.error("Move Up Failed", e); }
-  };
-
-  const movePoemDown = async (stableId) => {
-    if (!db) return;
-    const idx = sortedPoems.findIndex(p => p.stableId === stableId);
-    if (idx === -1 || idx >= sortedPoems.length - 1) return; // already at the bottom
-
-    const newOrder = sortedPoems.map(p => p.stableId);
-    [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
-    
-    try {
-       await setDoc(doc(db, 'mera_sach_settings', 'system'), { poemOrder: newOrder }, { merge: true });
-    } catch(e) { console.error("Move Down Failed", e); }
-  };
-
-  const handleEditClick = (poemToEdit) => {
-    setNewPoem({
-      title: poemToEdit.title || '', titleTrans: poemToEdit.titleTrans || '', titleEn: poemToEdit.titleEn || '',
-      content: poemToEdit.content || '', contentTrans: poemToEdit.contentTrans || '', contentEn: poemToEdit.contentEn || ''
-    });
-    setEditingPoemId(poemToEdit.stableId);
-    setIsAddModalOpen(true);
-  };
-
-  const handleSyncLocalAudio = async () => {
-    if (!db) return;
-    setIsSyncing(true);
-    try {
-      const localDB = await getAllAudioDB();
-      const keys = Object.keys(localDB);
-      let count = 0;
-      for (const key of keys) {
-        count++;
-        setSyncProgress(`Syncing ${count}/${keys.length}...`);
-        const data = localDB[key];
-        await uploadAudioToCloud(db, key, data.audioBase64, data.mimeType);
-      }
-      setSuccessMsg(`Successfully backed up ${keys.length} recordings to cloud!`);
-      setTimeout(() => setSuccessMsg(null), 5000);
-    } catch (err) {
-      console.error("Sync error:", err);
-      setMicError("Failed to sync some recordings. See console for details.");
-      setTimeout(() => setMicError(null), 5000);
-    }
-    setIsSyncing(false);
-    setSyncProgress('');
-  };
-
-  const handleSaveNewPoem = async () => {
-    if (!newPoem.title || !newPoem.content) {
-      setMicError("Hindi Title and Content are required.");
-      setTimeout(() => setMicError(null), 3000);
-      return;
-    }
-    if (!db) {
-      setMicError("Database connection missing. Cannot save poem to cloud.");
-      setTimeout(() => setMicError(null), 3000);
-      return;
-    }
-    try {
-      if (editingPoemId !== null) {
-        // WE ARE EDITING AN EXISTING POEM
-        
-        // 1. Is it an original hardcoded poem? (ID will be a numeric string '0', '1', etc)
-        const isOriginal = INITIAL_POEMS[editingPoemId] !== undefined;
-
-        if (isOriginal) {
-            // Find if we already have an override cloud document for this original poem
-            const existingOverride = customPoems.find(p => p.overridesOriginal === editingPoemId);
-            
-            if (existingOverride) {
-                await updateDoc(doc(db, 'mera_sach_custom_poems', existingOverride.id), {
-                    ...newPoem, updatedAt: Date.now()
-                });
-            } else {
-                // Create a new cloud document linking to the original
-                await setDoc(doc(collection(db, 'mera_sach_custom_poems')), {
-                    ...newPoem, overridesOriginal: editingPoemId, updatedAt: Date.now(), tags: ["Edited"]
-                });
-            }
-        } else {
-            // 2. It is a pure custom uploaded poem
-            await updateDoc(doc(db, 'mera_sach_custom_poems', editingPoemId), {
-                ...newPoem, updatedAt: Date.now()
-            });
-        }
-        setSuccessMsg("Poem updated successfully!");
-
-      } else {
-        // WE ARE ADDING A BRAND NEW POEM
-        const newDocRef = doc(collection(db, 'mera_sach_custom_poems'));
-        await setDoc(newDocRef, {
-          ...newPoem,
-          createdAt: Date.now(),
-          tags: ["Custom"]
-        });
-        setSuccessMsg("Poem added successfully!");
-      }
-
-      setIsAddModalOpen(false);
-      setEditingPoemId(null);
-      setNewPoem({title: '', titleTrans: '', titleEn: '', content: '', contentTrans: '', contentEn: ''});
-      setTimeout(() => setSuccessMsg(null), 3000);
-    } catch (e) {
-      console.error(e);
-      setMicError("Failed to save poem. Ensure database is in test mode.");
-      setTimeout(() => setMicError(null), 3000);
-    }
-  };
-
-  const confirmDeletePoem = async () => {
-    if (!poemToDelete || !db) return;
-    
-    try {
-       const isOriginal = INITIAL_POEMS[poemToDelete] !== undefined;
-
-       if (isOriginal) {
-          // If it's an original, we hide it globally using the settings document
-          await setDoc(doc(db, 'mera_sach_settings', 'system'), {
-             deletedOriginals: arrayUnion(poemToDelete)
-          }, { merge: true });
-       } else {
-          // If it's a custom uploaded poem, physically delete it from the cloud
-          await deleteDoc(doc(db, 'mera_sach_custom_poems', poemToDelete));
-       }
-
-       // Navigate away from the deleted poem to the first available one
-       if (sortedPoems.length > 0) {
-         setSelectedPoemId(sortedPoems[0].stableId);
-       }
-       setSuccessMsg("Poem deleted.");
-       setPoemToDelete(null);
-       setTimeout(() => setSuccessMsg(null), 3000);
-
-    } catch (e) {
-       console.error("Delete failed", e);
-       setMicError("Failed to delete. Ensure database permissions are open.");
-       setPoemToDelete(null);
-       setTimeout(() => setMicError(null), 3000);
-    }
-  };
-
-  const handlePoemSelect = (stableId) => {
+  const handlePoemSelect = (originalId) => {
     if (isRecording) stopRecording();
-    setSelectedPoemId(stableId);
+    setSelectedPoemIndex(originalId);
     setLanguageMode('hi');
     setMicError(null);
     setSuccessMsg(null);
-    setPoemAnalysis(null); // Reset AI analysis when switching poems
-    setPoemGlossary(null); // Reset Glossary
+    setPoemAnalysis(null);
+    setPoemGlossary(null);
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
-  };
-
-  const autoTranslatePoem = async () => {
-    const inputTitle = newPoem.title || newPoem.titleTrans || newPoem.titleEn || "";
-    const inputContent = newPoem.content || newPoem.contentTrans || newPoem.contentEn || "";
-
-    if (!inputTitle && !inputContent) {
-      setMicError("Please enter a title or content in at least one language first.");
-      setTimeout(() => setMicError(null), 3000);
-      return;
-    }
-
-    setIsTranslating(true);
-    try {
-      const apiKey = "";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-      
-      const systemPrompt = `You are a poetry translator. The user will provide a poem (title and content) in either Hindi (Devanagari script), Roman Hindi (Transliteration), or English.
-      Your task is to provide the missing forms so that all three exist: Hindi, Roman Hindi, and English.
-      Maintain the poetic flow, emotional depth, and rhythm in the translations.`;
-
-      const payload = {
-        contents: [{ parts: [{ text: `Original Input:\nTitle: ${inputTitle}\nContent:\n${inputContent}` }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: { 
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              title: { type: "STRING", description: "Title in Hindi (Devanagari)" },
-              titleTrans: { type: "STRING", description: "Title in Roman Hindi (Transliteration)" },
-              titleEn: { type: "STRING", description: "Title translated to English" },
-              content: { type: "STRING", description: "Content in Hindi (Devanagari)" },
-              contentTrans: { type: "STRING", description: "Content in Roman Hindi (Transliteration)" },
-              contentEn: { type: "STRING", description: "Content translated to English" }
-            }
-          }
-        }
-      };
-
-      const delays = [1000, 2000, 4000, 8000, 16000];
-      let data;
-      for (let i = 0; i <= 5; i++) {
-        try {
-          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          data = await response.json();
-          break;
-        } catch (error) {
-          if (i === 5) throw error;
-          await new Promise(resolve => setTimeout(resolve, delays[i]));
-        }
-      }
-
-      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (textData) {
-        const parsed = JSON.parse(textData);
-        setNewPoem(prev => ({
-          ...prev,
-          title: parsed.title || prev.title,
-          titleTrans: parsed.titleTrans || prev.titleTrans,
-          titleEn: parsed.titleEn || prev.titleEn,
-          content: parsed.content || prev.content,
-          contentTrans: parsed.contentTrans || prev.contentTrans,
-          contentEn: parsed.contentEn || prev.contentEn
-        }));
-        setSuccessMsg("Translations generated successfully!");
-        setTimeout(() => setSuccessMsg(null), 3000);
-      }
-    } catch (err) {
-      console.error(err);
-      setMicError("Failed to auto-translate. Please try again.");
-      setTimeout(() => setMicError(null), 3000);
-    } finally {
-      setIsTranslating(false);
-    }
   };
 
   const handleRate = async (starValue) => {
     const activeUid = user ? user.uid : getLocalUid();
 
+    // 1. Immediately Save Locally (Optimistic Update)
     try {
       const localRatings = JSON.parse(localStorage.getItem('mera_sach_local_ratings') || '{}');
-      localRatings[selectedPoemId] = starValue;
+      localRatings[selectedPoemIndex] = starValue;
       localStorage.setItem('mera_sach_local_ratings', JSON.stringify(localRatings));
       
       setRatings(prev => {
-        const existing = prev[selectedPoemId] || { avg: 0, count: 0 };
+        const existing = prev[selectedPoemIndex] || { avg: 0, count: 0 };
         return {
           ...prev,
-          [selectedPoemId]: { 
+          [selectedPoemIndex]: { 
              ...existing, 
              userRating: starValue,
+             // Temporarily spoof the average for the UI if it's the first rating
              avg: existing.count === 0 ? starValue : existing.avg,
              count: existing.count === 0 ? 1 : existing.count
           }
@@ -1108,146 +996,17 @@ const App = () => {
       console.error("Local storage rating failed", e);
     }
 
+    // 2. Attempt to Sync to Cloud
     if (db && appId) {
       try {
-        const docRef = doc(db, 'mera_sach_ratings', `poem_${selectedPoemId}`);
+        const docRef = doc(db, 'mera_sach_ratings', `poem_${selectedPoemIndex}`);
+        // Use { merge: true } so we don't accidentally overwrite ratings from other users
         await setDoc(docRef, { [activeUid]: starValue }, { merge: true });
       } catch (error) {
         console.error("Rating cloud sync error:", error);
         setMicError("Saved locally (Cloud blocked. Check Firebase Rules).");
         setTimeout(() => setMicError(null), 4000);
       }
-    }
-  };
-
-  const analyzePoem = async () => {
-    if (poemAnalysis) return; 
-    setIsAnalyzing(true);
-    setMicError(null);
-
-    try {
-      const apiKey = "";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-      const systemPrompt = "You are a deeply empathetic literary critic and poet. Your task is to analyze the given Hindi poem. Provide a beautiful, 2-3 paragraph explanation of its core meaning, emotional depth, and underlying metaphors. Speak directly to the reader in a warm, insightful tone in English. Keep it concise but profound.";
-      const userQuery = `Title: ${currentPoem.title}\n\nContent:\n${currentPoem.content}`;
-
-      const payload = {
-        contents: [{ parts: [{ text: userQuery }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] }
-      };
-
-      const delays = [1000, 2000, 4000, 8000, 16000];
-      let data;
-      for (let i = 0; i <= 5; i++) {
-        try {
-          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          data = await response.json();
-          break;
-        } catch (error) {
-          if (i === 5) throw error;
-          await new Promise(resolve => setTimeout(resolve, delays[i]));
-        }
-      }
-
-      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (textData) {
-        setPoemAnalysis(textData);
-      }
-    } catch (err) {
-      console.error(err);
-      setMicError("Failed to analyze the poem. Please try again.");
-      setTimeout(() => setMicError(null), 3000);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const fetchGlossary = async () => {
-    if (poemGlossary) return; 
-    setIsFetchingGlossary(true);
-    setMicError(null);
-
-    try {
-      const apiKey = "";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-      const systemPrompt = `You are a helpful dictionary assistant. Extract 4 to 8 of the most difficult, poetic, or deeply meaningful Urdu/Hindi words from the provided poem. Return the result STRICTLY as a JSON array of objects. Each object must have three keys: "word" (the word in Devanagari script), "roman" (Roman transliteration), and "meaning" (brief English meaning). Example: [{"word": "तस्सव्वुर", "roman": "Tassavvur", "meaning": "Imagination"}]`;
-      const userQuery = `Title: ${currentPoem.title}\n\nContent:\n${currentPoem.content}`;
-
-      const payload = {
-        contents: [{ parts: [{ text: userQuery }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: { responseMimeType: "application/json" }
-      };
-
-      const delays = [1000, 2000, 4000, 8000, 16000];
-      let data;
-      for (let i = 0; i <= 5; i++) {
-        try {
-          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          data = await response.json();
-          break;
-        } catch (error) {
-          if (i === 5) throw error;
-          await new Promise(resolve => setTimeout(resolve, delays[i]));
-        }
-      }
-
-      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (textData) {
-        setPoemGlossary(JSON.parse(textData));
-      }
-    } catch (err) {
-      console.error(err);
-      setMicError("Failed to load word meanings. Please try again.");
-      setTimeout(() => setMicError(null), 3000);
-    } finally {
-      setIsFetchingGlossary(false);
-    }
-  };
-
-  const suggestNextLine = async () => {
-    if (!newPoem.content) {
-      setMicError("Please start writing your poem first before asking for a suggestion.");
-      setTimeout(() => setMicError(null), 3000);
-      return;
-    }
-    setIsSuggestingLine(true);
-    try {
-      const apiKey = "";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-      const prompt = `You are a poetic muse helping a writer. Read what they have written so far in this Hindi poem, and elegantly suggest the next 1-2 lines to continue the thought, rhythm, and emotion. ONLY output the suggested lines in Devanagari script, nothing else.\n\nPoem so far:\n${newPoem.content}`;
-
-      const payload = { contents: [{ parts: [{ text: prompt }] }] };
-      const delays = [1000, 2000, 4000, 8000, 16000];
-      let data;
-      for (let i = 0; i <= 5; i++) {
-        try {
-          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          data = await response.json();
-          break;
-        } catch (error) {
-          if (i === 5) throw error;
-          await new Promise(resolve => setTimeout(resolve, delays[i]));
-        }
-      }
-
-      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (textData) {
-         setNewPoem(prev => ({ ...prev, content: prev.content + (prev.content.endsWith("\n") ? "" : "\n") + textData.trim() }));
-         setSuccessMsg("✨ Next line suggested!");
-         setTimeout(() => setSuccessMsg(null), 3000);
-      }
-    } catch(e) {
-      console.error(e);
-      setMicError("Failed to get suggestion.");
-      setTimeout(() => setMicError(null), 3000);
-    } finally {
-      setIsSuggestingLine(false);
     }
   };
 
@@ -1292,20 +1051,28 @@ const App = () => {
 
               setRecordings(prev => ({ 
                 ...prev, 
-                [selectedPoemId]: { url: base64data, type: blobType.includes('video') ? 'video' : 'audio', label: 'Local' } 
+                [selectedPoemIndex]: { url: base64data, type: blobType.includes('video') ? 'video' : 'audio', label: 'Local' } 
               }));
 
               try {
-                await saveAudioDB(selectedPoemId, base64data, blobType);
+                await saveAudioDB(selectedPoemIndex, base64data, blobType);
               } catch(e) { console.error("Local DB error:", e); }
 
               if (db && appId) {
                  try {
-                     await uploadAudioToCloud(db, selectedPoemId, base64data, blobType);
+                     const docRef = doc(db, 'mera_sach_audio', `poem_${selectedPoemIndex}`);
+                     await setDoc(docRef, {
+                       audioBase64: base64data,
+                       mimeType: blobType,
+                       updatedAt: Date.now()
+                     });
                      setSuccessMsg("Cloud saved successfully!");
                  } catch (uploadError) {
-                     setSuccessMsg("Saved locally! (Cloud unavailable)");
-                     console.error("Cloud save error:", uploadError);
+                     if (uploadError.code === 'resource-exhausted') {
+                         setSuccessMsg("Saved locally! (File too big for cloud limit)");
+                     } else {
+                         setSuccessMsg("Saved locally! (Cloud unavailable)");
+                     }
                  }
               } else {
                  setSuccessMsg("Saved successfully (Local)!");
@@ -1342,11 +1109,10 @@ const App = () => {
 
   const handleDeleteRecording = async () => {
     try {
-      await deleteAudioDB(selectedPoemId);
-      setRecordings(p => { const n={...p}; delete n[selectedPoemId]; return n; });
+      await deleteAudioDB(selectedPoemIndex);
+      setRecordings(p => { const n={...p}; delete n[selectedPoemIndex]; return n; });
       if (db && appId) {
-        await deleteDoc(doc(db, 'mera_sach_audio', `poem_${selectedPoemId}`));
-        await deleteDoc(doc(db, 'mera_sach_audio_meta', `poem_${selectedPoemId}`));
+        await deleteDoc(doc(db, 'mera_sach_audio', `poem_${selectedPoemIndex}`));
       } 
     } catch (e) {
       console.error("Failed to delete recording", e);
@@ -1356,8 +1122,8 @@ const App = () => {
   const formatTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2, '0')}`;
 
   const handleDownloadAudio = async () => {
-    const currentMedia = recordings[selectedPoemId];
-    const currentPoem = allPoems.find(p => p.stableId === selectedPoemId) || allPoems[0];
+    const currentMedia = recordings[selectedPoemIndex];
+    const currentPoem = allPoems[selectedPoemIndex] || allPoems[0];
     if (!currentMedia || !currentMedia.url) return;
     
     setIsDownloading(true);
@@ -1366,20 +1132,32 @@ const App = () => {
       const res = await fetch(currentMedia.url);
       const originalBlob = await res.blob();
 
-      // Apply requested format mime type
-      let mimeType = 'audio/mpeg';
-      if (downloadFormat === 'wav') mimeType = 'audio/wav';
-      else if (downloadFormat === 'webm') mimeType = 'audio/webm';
+      let downloadBlob = originalBlob;
+      let ext = 'webm';
 
-      const downloadBlob = new Blob([originalBlob], { type: mimeType });
+      if (downloadFormat === 'mp3' || downloadFormat === 'wav') {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const arrayBuffer = await originalBlob.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        if (downloadFormat === 'mp3') {
+          downloadBlob = await encodeToMp3(audioBuffer);
+          ext = 'mp3';
+        } else if (downloadFormat === 'wav') {
+          downloadBlob = encodeToWav(audioBuffer);
+          ext = 'wav';
+        }
+      } else {
+         ext = currentMedia.type === 'video' ? 'mp4' : 'webm';
+      }
+
       const downloadUrl = URL.createObjectURL(downloadBlob);
-
       const link = document.createElement('a');
       link.href = downloadUrl;
 
       // Create a clean filename from the roman or english title
       const safeTitle = (currentPoem?.titleTrans || currentPoem?.titleEn || "poem").replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      link.download = `mera_sach_${safeTitle}.${downloadFormat}`;
+      link.download = `mera_sach_${safeTitle}.${ext}`;
       
       document.body.appendChild(link);
       link.click();
@@ -1396,9 +1174,109 @@ const App = () => {
     }
   };
 
-  const currentPoem = allPoems.find(p => p.stableId === selectedPoemId) || allPoems[0] || { title: "No Poems Left", content: "All poems deleted.", stableId: 'empty' };
-  const currentMedia = recordings[selectedPoemId];
-  const currentRating = ratings[selectedPoemId];
+  const analyzePoem = async () => {
+    const currentPoem = allPoems[selectedPoemIndex];
+    if (poemAnalysis || !currentPoem) return; 
+    setIsAnalyzing(true);
+    setMicError(null);
+
+    try {
+      const apiKey = "";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+      const systemPrompt = "You are a deeply empathetic literary critic and poet. Your task is to analyze the given Hindi poem. Provide a beautiful, 2-3 paragraph explanation of its core meaning, emotional depth, and underlying metaphors. Speak directly to the reader in a warm, insightful tone in English. Keep it concise but profound.";
+      const userQuery = `Title: ${currentPoem.title}\n\nContent:\n${currentPoem.content}`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      const delays = [1000, 2000, 4000, 8000, 16000];
+      let data;
+      for (let i = 0; i <= 5; i++) {
+        try {
+          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          data = await response.json();
+          break;
+        } catch (error) {
+          if (i === 5) throw error;
+          await new Promise(resolve => setTimeout(resolve, delays[i]));
+        }
+      }
+
+      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (textData) {
+        setPoemAnalysis(textData);
+      }
+    } catch (err) {
+      console.error(err);
+      setMicError("Failed to analyze the poem. Please try again.");
+      setTimeout(() => setMicError(null), 3000);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const fetchGlossary = async () => {
+    const currentPoem = allPoems[selectedPoemIndex];
+    if (poemGlossary || !currentPoem) return; 
+    setIsFetchingGlossary(true);
+    setMicError(null);
+
+    try {
+      const apiKey = "";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+      const systemPrompt = `You are a helpful dictionary assistant. Extract 4 to 8 of the most difficult, poetic, or deeply meaningful Urdu/Hindi words from the provided poem. Return the result STRICTLY as a JSON array of objects. Each object must have three keys: "word" (the word in Devanagari script), "roman" (Roman transliteration), and "meaning" (brief English meaning). Example: [{"word": "तस्सव्वुर", "roman": "Tassavvur", "meaning": "Imagination"}]`;
+      const userQuery = `Title: ${currentPoem.title}\n\nContent:\n${currentPoem.content}`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: { responseMimeType: "application/json" }
+      };
+
+      const delays = [1000, 2000, 4000, 8000, 16000];
+      let data;
+      for (let i = 0; i <= 5; i++) {
+        try {
+          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          data = await response.json();
+          break;
+        } catch (error) {
+          if (i === 5) throw error;
+          await new Promise(resolve => setTimeout(resolve, delays[i]));
+        }
+      }
+
+      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (textData) {
+        setPoemGlossary(JSON.parse(textData));
+      }
+    } catch (err) {
+      console.error(err);
+      setMicError("Failed to load word meanings. Please try again.");
+      setTimeout(() => setMicError(null), 3000);
+    } finally {
+      setIsFetchingGlossary(false);
+    }
+  };
+
+  const currentPoem = allPoems[selectedPoemIndex] || allPoems[0] || { 
+      title: "No Poems Left", 
+      content: "All poems deleted.", 
+      stableId: 'empty', 
+      titleTrans: '', 
+      titleEn: '', 
+      contentTrans: '', 
+      contentEn: '', 
+      artworkTheme: 'barren' 
+  };
+  const currentMedia = recordings[selectedPoemIndex];
+  const currentRating = ratings[selectedPoemIndex];
 
   const displayTitle = languageMode === 'en' ? (currentPoem.titleEn || currentPoem.title) : 
                        languageMode === 'ro' ? (currentPoem.titleTrans || currentPoem.title) : 
@@ -1412,7 +1290,7 @@ const App = () => {
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
 
       {/* Header for Mobile */}
-      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between p-4 bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 backdrop-blur-md">
+      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between p-4 bg-inherit border-b border-slate-200 dark:border-slate-800 backdrop-blur-md">
         <button onClick={() => setIsSidebarOpen(true)} className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg font-bold transition-transform active:scale-95">
           <Menu size={20} />
           <span className="text-sm">Poem List</span>
@@ -1433,31 +1311,19 @@ const App = () => {
               </div>
               <button className="lg:hidden p-2 text-slate-400" onClick={() => setIsSidebarOpen(false)}><X size={20}/></button>
             </div>
-            <div className="relative mb-4">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input type="text" placeholder="खोजें (Search...)" className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-900 rounded-xl text-sm outline-none transition-all focus:ring-1 focus:ring-red-400" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
-            {isAdmin && (
-              <div className="flex flex-col gap-2 mb-2">
-                <button onClick={() => { setEditingPoemId(null); setIsAddModalOpen(true); }} className="w-full py-2 bg-slate-800 dark:bg-slate-700 text-white rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors flex justify-center items-center gap-2">
-                  <span className="text-lg leading-none mt-[-2px]">+</span> Upload New Poem
-                </button>
-                <button onClick={handleSyncLocalAudio} disabled={isSyncing} className="w-full py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex justify-center items-center gap-2">
-                  {isSyncing ? <Loader2 className="animate-spin" size={16} /> : <Cloud size={16} />} 
-                  {isSyncing ? syncProgress : "Sync Audio to Cloud"}
-                </button>
-              </div>
-            )}
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
             {filteredPoems.map((p) => {
-                const idx = p.stableId;
-                const absoluteIndex = sortedPoems.findIndex(sp => sp.stableId === idx) + 1;
+                const idx = p.originalId;
                 return (
-                    <button key={idx} onClick={() => handlePoemSelect(idx)} className={`w-full text-left p-4 rounded-xl flex justify-between items-center transition-all ${selectedPoemId === idx ? 'bg-red-50 dark:bg-red-950/30 text-red-600' : 'hover:bg-slate-100 dark:hover:bg-slate-900'}`}>
+                    <button key={idx} onClick={() => handlePoemSelect(idx)} className={`w-full text-left p-4 rounded-xl flex justify-between items-center transition-all ${selectedPoemIndex === idx ? 'bg-red-50 dark:bg-red-950/30 text-red-600' : 'hover:bg-slate-100 dark:hover:bg-slate-900'}`}>
                         <div className="flex flex-col max-w-[80%]">
-                           <span className="font-medium truncate">{absoluteIndex}. {languageMode === 'hi' ? p.title : (p.titleTrans || p.title)}</span>
+                           <span className="font-medium truncate">{languageMode === 'hi' ? p.title : (p.titleTrans || p.title)}</span>
                            {ratings[idx]?.avg > 0 && (
                              <span className="text-[10px] text-yellow-500 font-bold flex items-center mt-1">
                                <Star size={10} fill="currentColor" className="mr-1"/> {ratings[idx].avg.toFixed(1)}
@@ -1478,27 +1344,19 @@ const App = () => {
           <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-full hover:scale-110 transition-transform">{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button>
         </div>
 
-        <article className="max-w-3xl w-full min-h-[600px] p-12 lg:px-20 lg:py-24 bg-white dark:bg-slate-800/80 shadow-2xl rounded-[2.5rem] border border-slate-100 dark:border-slate-700 relative flex flex-col group overflow-hidden">
+        <article className="max-w-3xl w-full bg-white dark:bg-slate-800/40 p-8 lg:p-16 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 relative overflow-hidden group">
           
           <ArtisticLineBorder darkMode={darkMode} />
 
-          {/* AUTHOR BACKGROUND IMAGE */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden rounded-[2.5rem]">
-            <img 
-              src="99CDC791-1F47-4D2A-916F-A223156A5988.jpeg" 
-              alt="Author Background" 
-              className="absolute w-full h-full object-cover mix-blend-multiply dark:mix-blend-screen"
-              style={{ 
-                filter: 'grayscale(100%) contrast(1.2) opacity(0.12)',
-                WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 70%)',
-                maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 70%)'
-              }}
-            />
+          {/* BACKGROUND GRAPHIC */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+            <div className="w-[80%] h-[60%] transform transition-transform duration-1000 group-hover:scale-105">
+                <PoemGraphic theme={currentPoem.artworkTheme} darkMode={darkMode} />
+            </div>
           </div>
 
           {/* Foreground Content */}
-          <div className="relative z-10 w-full h-full flex flex-col">
-            
+          <div className="relative z-10">
             {/* FLOATING RECORDING BAR */}
             {isRecording && (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-red-200 dark:border-red-900/30 flex items-center gap-6 animate-in slide-in-from-top-4 duration-300 ring-2 ring-red-500/20">
@@ -1514,62 +1372,42 @@ const App = () => {
                 </div>
             )}
 
-            <div className="w-full flex flex-col items-center mb-10 text-center">
-                
-                {/* NOTIFICATIONS */}
+            <header className="mb-10 text-center relative">
                 {micError && (
-                  <div className="w-full mb-6 bg-red-50 dark:bg-red-900/30 p-4 rounded-2xl flex items-center justify-between gap-3 border border-red-200 dark:border-red-800 animate-in fade-in slide-in-from-top-2">
-                    <div className="flex items-center gap-3 text-left">
-                       <AlertCircle className="text-red-500 shrink-0" size={20} />
-                       <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">{micError}</p>
-                    </div>
-                    <button onClick={() => setMicError(null)} className="text-red-500 hover:bg-red-100 dark:hover:bg-red-800 p-1 rounded-lg transition-colors"><X size={16} /></button>
+                  <div className="absolute top-0 left-0 right-0 bg-red-50 dark:bg-red-900/30 p-4 rounded-2xl flex items-center gap-3 z-30 border border-red-200 dark:border-red-800 animate-in fade-in slide-in-from-top-4">
+                    <AlertCircle className="text-red-500 shrink-0" size={20} />
+                    <p className="text-xs text-red-700 dark:text-red-300 text-left leading-relaxed">{micError}</p>
+                    <button onClick={() => setMicError(null)} className="ml-auto text-red-500"><X size={16} /></button>
                   </div>
                 )}
 
                 {successMsg && (
-                  <div className="w-full mb-6 bg-green-50 dark:bg-green-900/30 p-4 rounded-2xl flex items-center gap-3 border border-green-200 dark:border-green-800 animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute top-0 left-0 right-0 bg-green-50 dark:bg-green-900/30 p-4 rounded-2xl flex items-center gap-3 z-30 border border-green-200 dark:border-green-800 animate-in fade-in slide-in-from-top-4">
                     <Save className="text-green-500 shrink-0" size={20} />
                     <p className="text-xs text-green-700 dark:text-green-300 font-bold">{successMsg}</p>
                   </div>
                 )}
-
-                {/* ADMIN CONTROL BAR */}
-                {isAdmin && currentPoem.stableId !== 'empty' && (
-                  <div className="w-full flex items-center justify-between px-5 py-2 mb-8 bg-slate-100/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700 animate-in fade-in">
-                    <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase hidden sm:block">Admin Mode Active</span>
-                    <div className="flex items-center gap-2 mx-auto sm:mx-0">
-                      <button onClick={() => movePoemUp(currentPoem.stableId)} disabled={currentSortedIndex <= 0} className="p-1.5 text-slate-500 hover:text-indigo-500 disabled:opacity-30 transition-colors" title="Move Up"><ChevronUp size={18} /></button>
-                      <button onClick={() => movePoemDown(currentPoem.stableId)} disabled={currentSortedIndex >= sortedPoems.length - 1} className="p-1.5 text-slate-500 hover:text-indigo-500 disabled:opacity-30 transition-colors" title="Move Down"><ChevronDown size={18} /></button>
-                      <div className="w-px h-5 bg-slate-300 dark:bg-slate-600 mx-2" />
-                      <button onClick={() => handleEditClick(currentPoem)} className="p-1.5 text-slate-500 hover:text-blue-500 transition-colors" title="Edit Poem"><Edit size={18} /></button>
-                      <button onClick={() => setPoemToDelete(currentPoem.stableId)} className="p-1.5 text-slate-500 hover:text-red-500 transition-colors" title="Delete Poem"><Trash2 size={18} /></button>
-                    </div>
-                  </div>
-                )}
                 
                 <div className="text-xs font-bold text-slate-400 mb-4 tracking-widest">
-                  POEM {currentSortedIndex + 1} OF {allPoems.length}
+                  RANK {currentSortedIndex + 1} OF {allPoems.length}
                 </div>
 
                 <div className="flex justify-center items-start flex-wrap gap-4 sm:gap-8 mb-8">
                     {/* Favorite */}
-                    <button onClick={() => toggleFavorite(selectedPoemId)} className="flex flex-col items-center group gap-1.5" title="Mark as favorite">
-                      <div className={`transition-all flex items-center justify-center h-8 ${favorites.includes(selectedPoemId) ? 'text-red-500 scale-110' : 'text-slate-300 group-hover:text-red-400'}`}>
-                        <Heart size={22} fill={favorites.includes(selectedPoemId) ? "currentColor" : "none"} />
+                    <button onClick={() => toggleFavorite(selectedPoemIndex)} className="flex flex-col items-center group gap-1.5" title="Mark as favorite">
+                      <div className={`transition-all flex items-center justify-center h-8 ${favorites.includes(selectedPoemIndex) ? 'text-red-500 scale-110' : 'text-slate-300 group-hover:text-red-400'}`}>
+                        <Heart size={22} fill={favorites.includes(selectedPoemIndex) ? "currentColor" : "none"} />
                       </div>
                       <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Favorite</span>
                     </button>
                     
-                    {/* Record (Admin) */}
-                    {isAdmin && (
-                      <button onClick={startRecording} className="flex flex-col items-center group gap-1.5" title="Record Voice">
-                        <div className={`transition-all flex items-center justify-center h-8 ${isRecording ? 'text-red-500 scale-125 animate-pulse' : 'text-slate-300 group-hover:text-red-500'}`}>
-                          <Mic size={22} />
-                        </div>
-                        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Record</span>
-                      </button>
-                    )}
+                    {/* Record */}
+                    <button onClick={startRecording} className="flex flex-col items-center group gap-1.5" title="Record Voice">
+                      <div className={`transition-all flex items-center justify-center h-8 ${isRecording ? 'text-red-500 scale-125 animate-pulse' : 'text-slate-300 group-hover:text-red-500'}`}>
+                        <Mic size={22} />
+                      </div>
+                      <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Record</span>
+                    </button>
 
                     {/* Transliterate */}
                     <button onClick={() => setLanguageMode(languageMode === 'ro' ? 'hi' : 'ro')} className="flex flex-col items-center group gap-1.5" title="Transliterate (Roman Hindi)">
@@ -1586,7 +1424,7 @@ const App = () => {
                       </div>
                       <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">English</span>
                     </button>
-
+                    
                     {/* Discover Meaning */}
                     <button onClick={analyzePoem} disabled={isAnalyzing} className="flex flex-col items-center group gap-1.5 disabled:opacity-50" title="✨ Discover Meaning">
                       <div className={`transition-all flex items-center justify-center h-8 ${poemAnalysis ? 'text-indigo-600 scale-110' : 'text-slate-300 group-hover:text-indigo-400'}`}>
@@ -1609,27 +1447,25 @@ const App = () => {
                 </h2>
 
                 {/* 3-STAR RATING SYSTEM UI */}
-                {currentPoem.stableId !== 'empty' && (
-                  <div className="flex flex-col items-center justify-center gap-1 mb-6">
-                    <div className="flex gap-2">
-                      {[1, 2, 3].map(star => (
-                        <button 
-                          key={star} 
-                          onClick={() => handleRate(star)}
-                          className={`p-1.5 transition-transform hover:scale-110 active:scale-95 ${currentRating?.userRating >= star ? 'text-yellow-500' : 'text-slate-300 dark:text-slate-600'}`}
-                          title={`Rate ${star} Star${star > 1 ? 's' : ''}`}
-                        >
-                          <Star fill={currentRating?.userRating >= star ? "currentColor" : "none"} size={26} />
-                        </button>
-                      ))}
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
-                      {currentRating?.avg ? `${currentRating.avg.toFixed(1)} ★ Average (${currentRating.count} Rating${currentRating.count !== 1 ? 's' : ''})` : 'Unrated - Be the first to rate!'}
-                    </span>
+                <div className="flex flex-col items-center justify-center gap-1 mb-6">
+                  <div className="flex gap-2">
+                    {[1, 2, 3].map(star => (
+                      <button 
+                        key={star} 
+                        onClick={() => handleRate(star)}
+                        className={`p-1.5 transition-transform hover:scale-110 active:scale-95 ${currentRating?.userRating >= star ? 'text-yellow-500' : 'text-slate-300 dark:text-slate-600'}`}
+                        title={`Rate ${star} Star${star > 1 ? 's' : ''}`}
+                      >
+                        <Star fill={currentRating?.userRating >= star ? "currentColor" : "none"} size={26} />
+                      </button>
+                    ))}
                   </div>
-                )}
+                  <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
+                    {currentRating?.avg ? `${currentRating.avg.toFixed(1)} ★ Average (${currentRating.count} Rating${currentRating.count !== 1 ? 's' : ''})` : 'Unrated - Be the first to rate!'}
+                  </span>
+                </div>
 
-            </div>
+            </header>
 
             {/* Media Player Box */}
             {currentMedia && !isRecording && (
@@ -1668,7 +1504,7 @@ const App = () => {
             )}
 
             {/* Poem Text Layer */}
-            <div className={`poem-content whitespace-pre-wrap leading-[1.8] text-center drop-shadow-sm opacity-100 ${languageMode === 'en' ? 'text-lg lg:text-xl font-sans italic text-slate-700 dark:text-slate-300' : languageMode === 'ro' ? 'text-lg lg:text-xl font-sans text-slate-800 dark:text-slate-200 font-medium' : 'text-xl lg:text-2xl font-hindi text-slate-800 dark:text-slate-100'}`}>
+            <div className={`poem-content whitespace-pre-wrap leading-[1.8] text-center transition-all duration-700 drop-shadow-sm opacity-100 ${languageMode === 'en' ? 'text-lg lg:text-xl font-sans italic text-slate-700 dark:text-slate-300' : languageMode === 'ro' ? 'text-lg lg:text-xl font-sans text-slate-800 dark:text-slate-200 font-medium' : 'text-xl lg:text-2xl font-hindi text-slate-800 dark:text-slate-100'}`}>
                 {displayContent}
             </div>
             
@@ -1705,126 +1541,30 @@ const App = () => {
                 </div>
               </div>
             )}
-
-            <footer onClick={handleFooterClick} className="mt-20 pt-8 border-t border-slate-100 dark:border-slate-700 text-center text-slate-400 italic text-sm mt-auto select-none cursor-pointer">
-              संदीप ढींगरा - "मेरा सच"
-            </footer>
+            
+            <footer className="mt-20 pt-8 border-t border-slate-100 dark:border-slate-700 text-center text-slate-400 italic text-sm">संदीप ढींगरा - "मेरा सच"</footer>
           </div>
         </article>
 
         {/* Navigation Controls follow the dynamically sorted array! */}
-        <div className="mt-12 flex gap-4 relative z-20">
+        <div className="mt-12 flex gap-4">
           <button 
-            disabled={currentSortedIndex <= 0} 
-            onClick={() => setSelectedPoemId(sortedPoems[currentSortedIndex - 1]?.stableId)} 
+            disabled={currentSortedIndex === 0} 
+            onClick={() => setSelectedPoemIndex(sortedPoems[currentSortedIndex - 1].originalId)} 
             className="px-8 py-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl disabled:opacity-30 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
           >
             Previous
           </button>
           
           <button 
-            disabled={currentSortedIndex >= sortedPoems.length - 1} 
-            onClick={() => setSelectedPoemId(sortedPoems[currentSortedIndex + 1]?.stableId)} 
+            disabled={currentSortedIndex === sortedPoems.length - 1} 
+            onClick={() => setSelectedPoemIndex(sortedPoems[currentSortedIndex + 1].originalId)} 
             className="px-8 py-3 bg-red-600 text-white rounded-2xl disabled:opacity-30 shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 transition-all font-medium"
           >
             Next Poem
           </button>
         </div>
       </main>
-
-      {/* Add / Edit Poem Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6">
-          <div className="bg-white dark:bg-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{editingPoemId ? "Edit Poem" : "Upload New Poem"}</h2>
-              <button onClick={() => {setIsAddModalOpen(false); setEditingPoemId(null);}} className="text-slate-400 hover:text-red-500 transition-colors"><X size={24} /></button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
-              
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-sm text-indigo-800 dark:text-indigo-300">
-                  <span className="font-bold flex items-center gap-2 mb-1"><Sparkles size={16}/> AI Translation & Transliteration</span>
-                  Enter your poem in <b>any one language</b> (Hindi, Roman, or English), then let AI fill in the rest!
-                </div>
-                <button 
-                  onClick={autoTranslatePoem} 
-                  disabled={isTranslating}
-                  className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-md shadow-indigo-200 dark:shadow-none"
-                >
-                  {isTranslating ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                  {isTranslating ? "Translating..." : "Auto-Fill Now"}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Hindi Title *</label>
-                  <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" placeholder="उदासी" value={newPoem.title} onChange={e => setNewPoem({...newPoem, title: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Roman Title</label>
-                  <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" placeholder="Udaasi" value={newPoem.titleTrans} onChange={e => setNewPoem({...newPoem, titleTrans: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">English Title</label>
-                  <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none" placeholder="Sadness" value={newPoem.titleEn} onChange={e => setNewPoem({...newPoem, titleEn: e.target.value})} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <div className="flex justify-between items-end mb-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Hindi Content *</label>
-                    <button 
-                      onClick={suggestNextLine}
-                      disabled={isSuggestingLine}
-                      className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 flex items-center gap-1 uppercase tracking-widest disabled:opacity-50"
-                    >
-                      {isSuggestingLine ? <Loader2 className="animate-spin" size={12} /> : <Sparkles size={12} />}
-                      {isSuggestingLine ? "Thinking..." : "Suggest Line"}
-                    </button>
-                  </div>
-                  <textarea rows={6} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none" placeholder="कविता यहाँ लिखें..." value={newPoem.content} onChange={e => setNewPoem({...newPoem, content: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Roman Content</label>
-                  <textarea rows={6} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none" placeholder="Kavita yahan likhein..." value={newPoem.contentTrans} onChange={e => setNewPoem({...newPoem, contentTrans: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">English Content</label>
-                  <textarea rows={6} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-red-400 outline-none resize-none" placeholder="Write poem here..." value={newPoem.contentEn} onChange={e => setNewPoem({...newPoem, contentEn: e.target.value})} />
-                </div>
-              </div>
-
-            </div>
-            
-            <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
-              <button onClick={() => {setIsAddModalOpen(false); setEditingPoemId(null);}} className="px-6 py-2 rounded-xl text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
-              <button onClick={handleSaveNewPoem} className="px-6 py-2 rounded-xl bg-red-600 text-white font-bold shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 transition-colors">{editingPoemId ? "Save Changes" : "Upload Poem"}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirm Delete Modal */}
-      {poemToDelete && (
-         <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
-               <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Trash2 size={32} />
-               </div>
-               <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Delete Poem?</h3>
-               <p className="text-slate-500 dark:text-slate-400 mb-8">Are you sure you want to delete this poem? This action cannot be completely undone.</p>
-               
-               <div className="flex gap-3 justify-center">
-                 <button onClick={() => setPoemToDelete(null)} className="px-6 py-3 rounded-xl text-slate-600 dark:text-slate-300 font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
-                 <button onClick={confirmDeletePoem} className="px-6 py-3 rounded-xl bg-red-600 text-white font-bold shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 transition-colors">Yes, Delete</button>
-               </div>
-            </div>
-         </div>
-      )}
 
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
