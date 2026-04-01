@@ -75,7 +75,7 @@ const getLocalUid = () => {
 // In this preview environment, the API key is securely injected.
 // For Netlify, get a free key at: https://aistudio.google.com/app/apikey 
 // and paste it inside the empty quotes below before deploying!
-const GEMINI_API_KEY = "AIzaSyCsR9BeF24zZ0t82pRuMn-4eBEjvDI8N0U";
+const GEMINI_API_KEY = "";
 
 // --------------------------------------------------------
 // LOCAL DATABASE (IndexedDB) FOR GUARANTEED PERMANENCE
