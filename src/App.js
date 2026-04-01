@@ -70,6 +70,14 @@ const getLocalUid = () => {
 };
 
 // --------------------------------------------------------
+// GEMINI AI CONFIGURATION (For Netlify / Production)
+// --------------------------------------------------------
+// In this preview environment, the API key is securely injected.
+// For Netlify, get a free key at: https://aistudio.google.com/app/apikey 
+// and paste it inside the empty quotes below before deploying!
+const GEMINI_API_KEY = "AIzaSyCsR9BeF24zZ0t82pRuMn-4eBEjvDI8N0U";
+
+// --------------------------------------------------------
 // LOCAL DATABASE (IndexedDB) FOR GUARANTEED PERMANENCE
 // --------------------------------------------------------
 const DB_NAME = 'MeraSachAudioDB';
@@ -1354,7 +1362,7 @@ const App = () => {
     setMicError(null);
 
     try {
-      const apiKey = "";
+      const apiKey = GEMINI_API_KEY || "";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
       const systemPrompt = "You are a deeply empathetic literary critic and poet. Your task is to analyze the given Hindi poem. Provide a beautiful, 2-3 paragraph explanation of its core meaning, emotional depth, and underlying metaphors. Speak directly to the reader in a warm, insightful tone in English. Keep it concise but profound.";
@@ -1399,7 +1407,7 @@ const App = () => {
     setMicError(null);
 
     try {
-      const apiKey = "";
+      const apiKey = GEMINI_API_KEY || "";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
       const systemPrompt = `You are a helpful dictionary assistant. Extract 4 to 8 of the most difficult, poetic, or deeply meaningful Urdu/Hindi words from the provided poem. Return the result STRICTLY as a JSON array of objects. Each object must have three keys: "word" (the word in Devanagari script), "roman" (Roman transliteration), and "meaning" (brief English meaning). Example: [{"word": "तस्सव्वुर", "roman": "Tassavvur", "meaning": "Imagination"}]`;
@@ -1450,7 +1458,7 @@ const App = () => {
 
     setIsTranslating(true);
     try {
-      const apiKey = "";
+      const apiKey = GEMINI_API_KEY || "";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
       
       const systemPrompt = `You are a poetry translator. The user will provide a poem (title and content) in either Hindi (Devanagari script), Roman Hindi (Transliteration), or English.
@@ -1522,7 +1530,7 @@ const App = () => {
     }
     setIsSuggestingLine(true);
     try {
-      const apiKey = "";
+      const apiKey = GEMINI_API_KEY || "";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
       const prompt = `You are a poetic muse helping a writer. Read what they have written so far in this Hindi poem, and elegantly suggest the next 1-2 lines to continue the thought, rhythm, and emotion. ONLY output the suggested lines in Devanagari script, nothing else.\n\nPoem so far:\n${newPoem.content}`;
 
