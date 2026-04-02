@@ -1568,7 +1568,8 @@ const App = () => {
 
     try {
       const apiKey = GEMINI_API_KEY || "";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      const modelName = GEMINI_API_KEY ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
       const systemPrompt = "You are a deeply empathetic literary critic and poet. Your task is to analyze the given Hindi poem. Provide a beautiful, 2-3 paragraph explanation of its core meaning, emotional depth, and underlying metaphors. Speak directly to the reader in a warm, insightful tone in English. Keep it concise but profound.";
       const userQuery = `Title: ${currentPoem.title}\n\nContent:\n${currentPoem.content}`;
@@ -1618,7 +1619,8 @@ const App = () => {
     setIsTranslating(true);
     try {
       const apiKey = GEMINI_API_KEY || "";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      const modelName = GEMINI_API_KEY ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
       
       const systemPrompt = `You are a poetry translator. The user will provide a poem (title and content) in either Hindi (Devanagari script), Roman Hindi (Transliteration), or English.
       Your task is to provide the missing forms so that all three exist: Hindi, Roman Hindi, and English.
@@ -1690,7 +1692,8 @@ const App = () => {
     setIsSuggestingLine(true);
     try {
       const apiKey = GEMINI_API_KEY || "";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      const modelName = GEMINI_API_KEY ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
       const prompt = `You are a poetic muse helping a writer. Read what they have written so far in this Hindi poem, and elegantly suggest the next 1-2 lines to continue the thought, rhythm, and emotion. ONLY output the suggested lines in Devanagari script, nothing else.\n\nPoem so far:\n${newPoem.content}`;
 
       const payload = { contents: [{ parts: [{ text: prompt }] }] };
@@ -1865,6 +1868,21 @@ const App = () => {
           {/* Foreground Content */}
           <div className="relative z-10 w-full h-full flex flex-col">
             
+            {/* FLOATING RECORDING BAR */}
+            {isRecording && (
+                <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-red-200 dark:border-red-900/30 flex items-center gap-6 animate-in slide-in-from-top-4 duration-300 ring-2 ring-red-500/20">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+                        <span className="text-red-500 font-bold font-mono tracking-tighter text-lg">{formatTime(recordingTime)}</span>
+                    </div>
+                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
+                    <button onClick={stopRecording} className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors font-bold uppercase text-xs tracking-widest">
+                        <Square size={20} fill="currentColor" />
+                        STOP
+                    </button>
+                </div>
+            )}
+
             <header className="mb-10 text-center relative">
                 {micError && (
                   <div className="absolute top-0 left-0 right-0 bg-red-50 dark:bg-red-900/30 p-4 rounded-2xl flex items-center gap-3 z-30 border border-red-200 dark:border-red-800 animate-in fade-in slide-in-from-top-4">
