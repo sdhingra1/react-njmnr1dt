@@ -72,7 +72,9 @@ const getLocalUid = () => {
 // --------------------------------------------------------
 // GEMINI AI CONFIGURATION (For Netlify / Production)
 // --------------------------------------------------------
-const GEMINI_API_KEY = "AIzaSyCsR9BeF24zZ0t82pRuMn-4eBEjvDI8N0U";
+// The previous key was revoked by Google for being in a public repo.
+// Set your repo to Private, generate a new key, and paste it here:
+const GEMINI_API_KEY = "";
 
 // --------------------------------------------------------
 // LOCAL DATABASE (IndexedDB) FOR GUARANTEED PERMANENCE
@@ -431,7 +433,7 @@ const INITIAL_POEMS = [
     titleTrans: "Dard",
     titleEn: "Pain",
     content: "दिल की ज़मीं पर तेरे दर्द का पेड़\nधीरे-धीरे कुछ और फैलता जाता है\nहर रात तैरी याद जब बरसती है\nहर पत्ता कुछ और हरा हो जाता है\n\nकुछ फूल भी खिलने लगे हैं आस पास\nमौसम कछ और बदलता जाता है\nतेरे दर्द की आदत का सहारा है तो\nजीना कुछ और आसान हुआ जाता है\n\nऔर कुछ और भी हैरानी है मुझे\nतेरे मिलने की तमन्ना, इंतज़ार तेरा\nअब भी बाकी है मगर, दर्द तेरा\nअब तुझ से भी अज़ीज़ हुआ जाता है",
-    contentTrans: "Dil ki zameen par tere dard ka ped\nDheere-dheere kuchh aur phailta jaata hai\nHar raat teri yaad jab barasti hai\nHar patta kuchh aur hara ho jaata hai\n\nKuchh phool bhi khilne lage hain aas paas\nMausam kuchh aur badalta jaata hai\nTere dard ki aadat ka sahara hai toh\nJeena kuchh aur aasan hua jaata hai\n\nAur kuchh aur bhi hairani hai mujhe\nTere milne ki tamanna, intezaar tera\nAb bhi baaki hai magar, dard tera\nAb tujh se bhi azeez hua jaata hai",
+    contentTrans: "Dil ki zameen par tere dard ka ped\nDheere-dheere kuchh aur phailta jaata hai\nHar raat teri yaad jab barasti hai\nHar patta kuchh aur hara ho jaata hai\n\nKuchh phool bhi khilne lage hain aas paas\nMausam kuchh aur badalta jaata hai\nTere dard ki aadat ka sahara hai toh\nJeena kuchh aur aasan hua jaata hai\n\nAur kuchh aur bhi hairani hai mujhe\nTere milne ki tamanna, intezaar tera\nAb bhi baaki magar, dard tera\nAb tujh se bhi azeez hua jaata hai",
     contentEn: "On the ground of my heart, the tree of your pain\nSlowly keeps spreading a little more\nEvery night when your memory rains\nEvery leaf becomes a little greener\n\nSome flowers have also begun to bloom nearby\nThe season keeps changing a little more\nWith the support of the habit of your pain\nLiving becomes a little easier\n\nAnd something else surprises me\nThe desire to meet you, the waiting for you\nIs still there, yet your pain\nIs becoming even dearer to me than you",
     artworkTheme: "tree",
     glossary: [
