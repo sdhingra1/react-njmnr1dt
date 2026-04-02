@@ -72,8 +72,8 @@ const getLocalUid = () => {
 // --------------------------------------------------------
 // GEMINI AI CONFIGURATION (For Netlify / Production)
 // --------------------------------------------------------
-// The previous key was revoked by Google for being in a public repo.
-// Set your repo to Private, generate a new key, and paste it here:
+// Set your repo to Private, generate a new key at https://aistudio.google.com/app/apikey
+// and paste it here. This is ONLY needed for the Admin "Auto-Translate" and "Suggest Line" tools!
 const GEMINI_API_KEY = "";
 
 // --------------------------------------------------------
@@ -391,6 +391,7 @@ const INITIAL_POEMS = [
     contentTrans: "Aag halki si sulagti hai dil ki zameen par\nDil khushk hai jaise kisi banjar ki tarah\nKoi ashk aaj dhalta hi nahin\n\nKuchh jam sa gaya hai kisi kone mein dil ke\nKuchh baith gaya hai kisi patthar ki tarah\nKoi dost aaj milta hi nahin\n\nIk sher hai, nazm hai ya nagma hai koi\nKuchh uljha hua hai kisi gunjal ki tarah\nKoi lafz aaj janchta hi nahin",
     contentEn: "A faint fire smolders on the ground of the heart\nThe heart is dry, like a barren wasteland\nNot a single tear flows today\n\nSomething has frozen in a corner of the heart\nSomething has settled heavy like a stone\nNo friend is found today\n\nWhether it's a verse, a poem, or a song\nSomething is tangled like a messy knot\nNo word seems right today",
     artworkTheme: "barren",
+    meaning: "Expresses a deep emotional numbness and writer's block, where the heart feels like a barren wasteland and no words or friends can offer solace.",
     glossary: [
       { word: "सुलगती", roman: "Sulagti", meaning: "Smoldering / Burning slowly" },
       { word: "खुश्क", roman: "Khushk", meaning: "Dry" },
@@ -406,6 +407,7 @@ const INITIAL_POEMS = [
     contentTrans: "Har purani guftagoo ko baarha\nDil hi dil mein\nPhir se dohrane ki aadat\n\nJahan aksar mila karte the hum\nUs purane maqbare par\nBekhudi mein apne aap\nKhud usi patthar ke paas\nYak-ba-yak paane ki aadat\n\nMeri raahaton mein shumar hain\nAadatein aisi kai\nAchhi-buri, chhoti-badi\n\nTera saath phir jo naseeb ho\nAur tu phir se mere kareeb ho\nTere tassavvur ka zaayka\nYaad ki wo lazzatein\n\nYaqeen dilati hain mujhe\nRahengi mere saath phir bhi\nWo achhi-buri, chhoti-badi\nSaari purani aadatein",
     contentEn: "Every old conversation, repeatedly\nWithin the depths of the heart\nThe habit of repeating them again\n\nWhere we used to meet often\nAt that old tomb\nIn a state of self-oblivion\nSuddenly finding myself\nRight beside that same stone\n\nNumbered among my comforts\nAre many such habits\nGood or bad, small or large\n\nIf your companionship is destined again\nAnd you come close to me once more\nThe taste of your imagination\nThose pleasures of memory\n\nThey assure me\nThey will stay with me still\nThose good-bad, small-large\nAll the old habits",
     artworkTheme: "tomb",
+    meaning: "Explores the bittersweet comfort of clinging to old habits and memories of a past lover, finding solace in the familiar pain of their absence.",
     glossary: [
       { word: "गुफतगू", roman: "Guftagoo", meaning: "Conversation" },
       { word: "बारहा", roman: "Baarha", meaning: "Repeatedly / Often" },
@@ -423,6 +425,7 @@ const INITIAL_POEMS = [
     contentTrans: "Usne likhi thi kahani\nMere jism par dheere dheere\n\nGaram sanson ki kalam se\nMere rooh par dheere dheere\n\nIk jheel si mehkai thi\nMain doob gaya dheere dheere\n\nHothon se chhua dil ko\nMajboor hua dheere dheere\n\nRangeen bisaat nazron ki\nBas haar gaya dheere dheere",
     contentEn: "She wrote a story\nUpon my body, slowly\n\nWith the pen of warm breaths\nUpon my soul, slowly\n\nShe scented a lake-like aura\nI drowned in it, slowly\n\nTouched the heart with lips\nI became helpless, slowly\n\nThe colorful chessboard of glances\nI simply lost to them, slowly",
     artworkTheme: "lake",
+    meaning: "A sensual and romantic piece depicting the slow, intoxicating surrender to love, as the beloved's presence completely captivates the poet's body and soul.",
     glossary: [
       { word: "रूह", roman: "Rooh", meaning: "Soul / Spirit" },
       { word: "बिसात", roman: "Bisaat", meaning: "Chessboard / Expanse" }
@@ -436,6 +439,7 @@ const INITIAL_POEMS = [
     contentTrans: "Dil ki zameen par tere dard ka ped\nDheere-dheere kuchh aur phailta jaata hai\nHar raat teri yaad jab barasti hai\nHar patta kuchh aur hara ho jaata hai\n\nKuchh phool bhi khilne lage hain aas paas\nMausam kuchh aur badalta jaata hai\nTere dard ki aadat ka sahara hai toh\nJeena kuchh aur aasan hua jaata hai\n\nAur kuchh aur bhi hairani hai mujhe\nTere milne ki tamanna, intezaar tera\nAb bhi baaki magar, dard tera\nAb tujh se bhi azeez hua jaata hai",
     contentEn: "On the ground of my heart, the tree of your pain\nSlowly keeps spreading a little more\nEvery night when your memory rains\nEvery leaf becomes a little greener\n\nSome flowers have also begun to bloom nearby\nThe season keeps changing a little more\nWith the support of the habit of your pain\nLiving becomes a little easier\n\nAnd something else surprises me\nThe desire to meet you, the waiting for you\nIs still there, yet your pain\nIs becoming even dearer to me than you",
     artworkTheme: "tree",
+    meaning: "Describes how the pain of a lost love has taken root in the heart, eventually becoming a familiar and cherished companion that is even dearer than the lover themselves.",
     glossary: [
       { word: "तमन्ना", roman: "Tamanna", meaning: "Desire / Longing" },
       { word: "अज़ीज़", roman: "Azeez", meaning: "Dear / Precious" }
@@ -449,6 +453,7 @@ const INITIAL_POEMS = [
     contentTrans: "Ye saali zindagi...\nBetarteeb bandhi dor ki tarah\nUlajhti si rehti hai\n\nHar waqt, har taraf, har jagah\nKuchh dhoondhti si rehti hai\n\nSharaab dono jahan ki pee kar bhi\nHar dam pyaasi rehti hai\n\nNa behakti hai\nNa sambhalti hai\n\nNa poori bujhti hai\nNa khul ke jalti hai\n\nNa meri hoti hai\nNa teri banti hai\n\nKisi apne ki bewajah bewafai ki tarah\nDil ke bheetar kuchh kasmasaati si rehti hai\n\nYe saali zindagi...",
     contentEn: "This wretched life...\nLike a haphazardly tied string\nIt remains tangled\n\nAll the time, in every direction, everywhere\nIt keeps searching for something\n\nEven after drinking the wine of both worlds\nIt remains thirsty every moment\n\nNeither does it wander off\nNor does it steady itself\n\nNeither is it fully extinguished\nNor does it burn brightly\n\nNeither does it become mine\nNor does it belong to you\n\nLike the needless betrayal of a loved one\nIt keeps restless within the heart\n\nThis wretched life...",
     artworkTheme: "tangle",
+    meaning: "A raw reflection on the chaotic, restless nature of life—a constant, unfulfilled search that feels like the inexplicable betrayal of a loved one.",
     glossary: [
       { word: "बेतरतीब", roman: "Betarteeb", meaning: "Haphazardly / Disorganized" },
       { word: "कसमसाती", roman: "Kasmasaati", meaning: "Restless / Squirming" }
@@ -462,6 +467,7 @@ const INITIAL_POEMS = [
     contentTrans: "Sulagti aahon mein jab dil doobta sa lagta hai\nKisko awaaz de koi, jahan ajnabi sa lagta hai\nKoi rahat, koi chahat, masiha toote hue dil ka\nKisi chamatkar ko ye dil dhoondhta sa lagta hai\n\nKoi masiha meri rahat ke liye\nPhir shayad mere paas na aane paaye\nMeri awaaz goonjti ho galiyon mein\nKoi jawab meri jaanib na aane paaye\n\nGar thaam loon aahon ko zara\nBand kar loon nigahon ko zara\nDil ko samjha loon phir se\nApni awaaz ko rokoon toh zara\n\nJab ye hasti kuchh aur khamosh ho jayegi\nYe aahein, ye bechaini kuchh aur zara tham jayegi\n\nShayad kisi dost ki barson ki dastak koi\nAwaaz jo mujhe dhoondh rahi hai jaane kab se\nSada jo dabi rahi shorishe-geti mein kahin\nMeri aankhon ko sunayi degi, dil mein utar jayegi",
     contentEn: "When the heart feels drowning in burning sighs\nWho to call out to, when the world seems strange\nSome comfort, some desire, a messiah for a broken heart\nThis heart seems to search for a miracle\n\nAny messiah for my relief\nMay perhaps never come near me again\nMay my voice echo in the streets\nAnd no answer may come my way\n\nIf I just hold my sighs for a bit\nClose my eyes for a bit\nConsole my heart once more\nStop my voice for a bit\n\nWhen this existence becomes a bit more silent\nThese sighs, this restlessness will settle a bit\n\nPerhaps an old friend's knock of years past\nA voice that has been searching for me since who knows when\nA call that remained suppressed in the noise of the world\nWill be heard by my eyes, will descend into my heart",
     artworkTheme: "barren",
+    meaning: "A poignant plea from a lonely heart crying out for connection in an alien world, hoping an old friend's voice will eventually pierce through the silence.",
     glossary: [
       { word: "मसीहा", roman: "Masiha", meaning: "Messiah / Healer" },
       { word: "जानिब", roman: "Jaanib", meaning: "Towards / Direction" },
@@ -479,6 +485,7 @@ const INITIAL_POEMS = [
     contentTrans: "Muflisi ko aise mitaya humne\nDard ko jageer banaya humne",
     contentEn: "We erased poverty in such a way\nWe made pain our inheritance",
     artworkTheme: "tomb",
+    meaning: "A concise, powerful couplet about embracing suffering, turning the destitution of the heart into a proud inheritance of pain.",
     glossary: [
       { word: "मुफलिसी", roman: "Muflisi", meaning: "Poverty / Destitution" },
       { word: "जागीर", roman: "Jageer", meaning: "Estate / Inheritance" }
@@ -492,6 +499,7 @@ const INITIAL_POEMS = [
     contentTrans: "Anginat raaton mein, aankhon ke aasmanon se\nBarsaat beeti baaton ki, baras baras barsi hai",
     contentEn: "In countless nights, from the skies of the eyes\nThe rain of past moments, has poured for years",
     artworkTheme: "lake",
+    meaning: "Captures the endless passage of time through the metaphor of tears, where memories of the past have rained down from the eyes for years on end.",
     glossary: [
       { word: "अनगिनत", roman: "Anginat", meaning: "Countless" }
     ]
@@ -504,6 +512,7 @@ const INITIAL_POEMS = [
     contentTrans: "Kisi ki udaan par khushi toh hui magar\nEk kasak bhi ubhar kar aayi aksar\n\nParwaaz ka shauq humein bhi tha bahut\nThak ke baith gaye dam lene ko aksar\n\nKabhi is ka kabhi us ka sahara lekar\nHar oonchai ko chhota kiya hai aksar\n\nPar aaj chhoona hai zara haath badha kar\nAasmaan jo bahut door laga hai aksar",
     contentEn: "I felt happy for someone else's flight but\nAn ache also often surfaced\n\nI too had a great passion for flying\nOften sat down to catch my breath, tired\n\nTaking the support of this one or that one\nOften made every height feel smaller\n\nBut today I have to reach out and touch\nThe sky that has often seemed very far",
     artworkTheme: "tree",
+    meaning: "A reflection on unfulfilled ambitions, where the poet watches others soar while acknowledging their own weariness, yet still holding onto a lingering desire to touch the sky.",
     glossary: [
       { word: "कसक", roman: "Kasak", meaning: "Ache / Lingering pain" },
       { word: "परवाज़", roman: "Parwaaz", meaning: "Flight" }
@@ -517,6 +526,7 @@ const INITIAL_POEMS = [
     contentTrans: "Kal maar diya maine\nMere andar ka\nKhalnayak\n\nAaj khush hai bahut\nMere bheetar ka\nNayak\n\nAb duniya badlegi\nNayak ki nayaki\nTere dukh har legi\n\nPar maine use bhi jeene nahin diya\n\nAur nayak ka bhi qatl mere hathon ho gaya\n\nPhir mere dil ke kono mein chhipa\nDheere se bahar aaya\nBarson se jo mere saath hai\nUsne sar uthaya, aur kaha\n\nMain, peedit hoon, main tere saath hoon\n\nUsne mera kandha thapthapaya\n\nAur phir duniya ki nainsaafi ka kissa dohraya\n\nMujhe maloom hai mujhe kya karna hai\nAb is peedit ko marna hai\n\nKyonki jab tak mere andar nayak, khalnayak aur peedit rahega\nMujhe sahi mayanon mein jeene se rokne wala abhineta zinda rahega\n\nAur mere dost\nHairan hoon, samajh nahin paa raha hoon\nMere andar ke peedit ko\nMain kyon maar nahin paa raha hoon?",
     contentEn: "Yesterday I killed\nThe villain\nInside me\n\nToday the hero\nWithin me\nIs very happy\n\nNow the world will change\nThe hero's heroism\nWill take away your sorrows\n\nBut I didn't let him live either\n\nAnd the hero was also murdered by my hands\n\nThen hidden in the corners of my heart\nSlowly came out\nThe one who has been with me for years\nHe raised his head, and said\n\nI am the victim, I am with you\n\nHe patted my shoulder\n\nAnd then repeated the tale of the world's injustice\n\nI know what I have to do\nNow this victim has to die\n\nBecause as long as the hero, villain and victim remain inside me\nThe actor who stops me from truly living will remain alive\n\nAnd my friend\nI am surprised, I cannot understand\nThe victim inside me\nWhy am I unable to kill him?",
     artworkTheme: "tangle",
+    meaning: "A profound internal dialogue about the conflict between the hero, villain, and victim within, realizing that true living begins only when one stops playing the perpetual victim.",
     glossary: [
       { word: "खलनायक", roman: "Khalnayak", meaning: "Villain" },
       { word: "नाइंसाफी", roman: "Nainsaafi", meaning: "Injustice" }
@@ -530,6 +540,7 @@ const INITIAL_POEMS = [
     contentTrans: "Khwaabon ki lahad par chal kar\nDil ne dhoya hai bhaar jeene ka\nKeh bhi deti zuban toh kya hota\nShauq hai dard-e-jaam peene ka",
     contentEn: "Walking on the grave of dreams\nThe heart has carried the burden of living\nEven if the tongue had spoken, what would happen\nThere is a desire to drink the cup of pain",
     artworkTheme: "barren",
+    meaning: "Expresses a fatalistic acceptance of sorrow, where the heart willingly carries the burden of existence and actively seeks the 'cup of pain'.",
     glossary: [
       { word: "लहद", roman: "Lahad", meaning: "Grave / Tomb" },
       { word: "दर्द-ए-जाम", roman: "Dard-e-jaam", meaning: "Cup of pain" }
@@ -543,6 +554,7 @@ const INITIAL_POEMS = [
     contentTrans: "Har umeed mein shamil hai\nMaazi ke hawadis ki jalan\n\nHar uthe kadam mein dakhil hai\nGir-gir ke sambhalne ki chubhan\n\nKuchh wajib, nawajib hai kuchh\nKambakht phir hai behakne mann",
     contentEn: "Included in every hope is\nThe burning of the past's accidents\n\nEntered in every raised step is\nThe sting of falling and steadying again\n\nSome is reasonable, some unreasonable\nDamn it, the mind is ready to wander again",
     artworkTheme: "tangle",
+    meaning: "Delves into the resilience and vulnerability of the human mind, which, despite the burns and stings of past tragedies, inevitably readies itself to hope and wander again.",
     glossary: [
       { word: "माज़ी", roman: "Maazi", meaning: "Past" },
       { word: "हवादिस", roman: "Hawadis", meaning: "Accidents / Tragedies" },
@@ -558,6 +570,7 @@ const INITIAL_POEMS = [
     contentTrans: "Tere khwaabon ke takaaze\nUmeedon ke ishaare\n\nWo ulfaton ki shartein\nJo hisaab maine haare\n\nKoi raat ab bujha de\nKoi subah ko pukaare\n\nAb thak ke so gaye hain\nMere khwaab sab bechaare",
     contentEn: "The demands of your dreams\nThe signals of hopes\n\nThose conditions of love\nThe accounts I have lost\n\nLet someone extinguish the night now\nLet someone call out to the morning\n\nNow they have fallen asleep, tired\nAll my poor dreams",
     artworkTheme: "lake",
+    meaning: "A melancholic surrender where the poet acknowledges defeat in love's demands, asking for the night to end as their exhausted dreams finally fall asleep.",
     glossary: [
       { word: "तकाज़े", roman: "Takaaze", meaning: "Demands / Requirements" },
       { word: "उल्फतों", roman: "Ulfaton", meaning: "Loves / Affections" }
@@ -571,6 +584,7 @@ const INITIAL_POEMS = [
     contentTrans: "Tanha rehna sabke saath\nHunar apna naya nahin koi\n\nGhazal se guftagoo har shaam\nShauq apna naya nahin koi\n\nThodi bekhudi .. thoda unka tassavvur .. thodi si chandni\n\nIntezaar mehfil ka har roz\nSabr apna naya nahin koi",
     contentEn: "To remain lonely while being with everyone\nIs not a new skill of mine\n\nConversing with ghazals every evening\nIs not a new hobby of mine\n\nA little self-oblivion.. a little imagination of them.. a little moonlight\n\nWaiting for the gathering every day\nIs not a new patience of mine",
     artworkTheme: "tomb",
+    meaning: "Describes the enduring patience of a poet who finds comfort in solitude, ghazals, and memories, making peace with the endless wait for a gathering that may never happen.",
     glossary: [
       { word: "तनहा", roman: "Tanha", meaning: "Lonely / Alone" },
       { word: "गुफ्तगू", roman: "Guftagoo", meaning: "Conversation" },
@@ -586,6 +600,7 @@ const INITIAL_POEMS = [
     contentTrans: "Tumhare shabdon ke jaal mein\nAksar uljha hai ahsaas mera\nShabdon ke astra se\nAahat bhi hua hoon\n\nPar shabdon ke ankush maine bhi chubhoye hain\nDard shabdon se aur nishabd\nMaine bhi diya hai tumko\n\nJinse shuru ki thi humne manzilein saari\nAb wahi shabd phir se dohrane honge\nShabd jo pehchante hain ranjishein saari\nShabd sukoon ke phir aazmane honge\n\nKya phir shabd utha paayenge?\nMaazi ka bojh kahin zyada toh nahin?\nMeri jurrat aur teri zaroorat ke liye\nShabd ye behad saada toh nahin?\n\nYa koi behakta hua shabd\nKisi khayal ki ungli thaame\nKisi purane zakhm ko saath liye\n\nPhail jayega koshish bhare shabdon par\nKisi badal, kisi dhuen ki tarah\n\nAur phir ek naya safar shuru hoga- shabdon ke bina -- tanha?",
     contentEn: "In the web of your words\nMy feelings have often tangled\nBy the weapon of words\nI have also been hurt\n\nBut I have also pierced with the goad of words\nPain through words and without words\nI have also given to you\n\nThe ones with which we started all our journeys\nNow those same words will have to be repeated\nThe words that recognize all grievances\nWords of comfort will have to be tried again\n\nWill we be able to pick up words again?\nIs the burden of the past not too much?\nFor my daring and your need\nAre these words not too simple?\n\nOr some wandering word\nHolding the finger of a thought\nTaking an old wound along\n\nWill spread over the attempt-filled words\nLike a cloud, like smoke\n\nAnd then a new journey will begin- without words -- lonely?",
     artworkTheme: "tangle",
+    meaning: "Explores the double-edged sword of words in a relationship—how they can both wound and heal, and questions whether the fragile connection can survive beyond them.",
     glossary: [
       { word: "अस्त्र", roman: "Astra", meaning: "Weapon" },
       { word: "अंकुश", roman: "Ankush", meaning: "Goad / Control" },
@@ -603,6 +618,7 @@ const INITIAL_POEMS = [
     contentTrans: "Uthengi meri taraf kab teri nazrein jhuki hui\nBarson se is umeed mein hain saansein ruki hui\n\nKaha toh kuchh bhi nahin tha teri zuban ne kabhi\nSuni hain baarha tere lab pe sadayein ruki hui\n\nTere kunj-e-lab ki halki si jumbish ke liye\nMeri subah, meri shaam, hain meri raatein ruki hui\n\nAb tum pe tiki hai meri manzil, meri hasti\nThami hai rooh, dono jahan ki raahein ruki hui",
     contentEn: "When will your lowered gaze rise towards me\nFor years, breaths have stopped in this hope\n\nYour tongue had never said anything\nYet I have often heard suppressed calls on your lips\n\nFor a slight movement of your lips\nMy mornings, my evenings, my nights are paused\n\nNow my destination, my existence rests on you\nThe soul has stopped, the paths of both worlds are paused",
     artworkTheme: "lake",
+    meaning: "A beautiful depiction of perpetual longing, where the poet's entire existence—mornings, nights, and the soul itself—is suspended in the singular hope of receiving the beloved's gaze.",
     glossary: [
       { word: "बारहा", roman: "Baarha", meaning: "Repeatedly / Often" },
       { word: "सदायै", roman: "Sadayein", meaning: "Calls / Voices" },
@@ -619,6 +635,7 @@ const INITIAL_POEMS = [
     contentTrans: "Raat sitaron ko dekha toh yeh ahsaas hua\nKhamosh jagmagahat mein .. kuchh hai shayad\nKoi jadoo, koi tarkeeb ya koi rab ki dua\nEk anjaan si aahat hai... koi hai shayad\n\nEk umeed si jaagi ke dua mangoon\nKoi mere is khwaab ko poora kar de\nAbke jab subah aaye aur main jaagoon\nBas phir ek baar mujhe zinda kar dein",
     contentEn: "Looking at the stars at night, I felt this\nIn the silent glow.. perhaps there is something\nSome magic, some trick or some prayer to God\nThere is an unknown rustle... perhaps someone is there\n\nA hope awoke that I should pray\nSomeone should fulfill this dream of mine\nThis time when morning comes and I wake up\nJust make me alive one more time",
     artworkTheme: "barren",
+    meaning: "A quiet prayer to the cosmos, sparked by the stillness of the night stars, asking for a miracle to awaken the soul and make the poet feel truly alive once more.",
     glossary: [
       { word: "तरकीब", roman: "Tarkeeb", meaning: "Trick / Method" }
     ]
@@ -631,6 +648,7 @@ const INITIAL_POEMS = [
     contentTrans: "Kisi gunah ki lazzat ke liye\nTeri panah ki chahat ke liye\n\nPhir ek baar talabgaar hai dil\nAaj ki shaam beqarar hai dil\n\nDuniya ise paap kahegi shayad\nHaan ye pyaar nahin hai shayad\n\nJaanta hai magar lachaar hai dil\nAaj ki shaam beqarar hai dil",
     contentEn: "For the pleasure of some sin\nFor the desire of your shelter\n\nOnce again the heart is a seeker\nThis evening the heart is restless\n\nThe world will probably call it a sin\nYes, perhaps this is not love\n\nIt knows but the heart is helpless\nThis evening the heart is restless",
     artworkTheme: "tangle",
+    meaning: "Grapples with the moral dilemma of forbidden love, acknowledging that while the world might deem the desire a sin, the helpless heart remains desperate for the lover's shelter.",
     glossary: [
       { word: "लज्ज़त", roman: "Lazzat", meaning: "Pleasure / Taste" },
       { word: "पनाह", roman: "Panah", meaning: "Shelter / Refuge" },
@@ -645,6 +663,7 @@ const INITIAL_POEMS = [
     contentTrans: "Main ravan hoon ...\n\nDashanan ke saare das sir mere andar hain\nAur jab tab ubhar aate hain\nTumne kabhi shayad dekha hoga\nJo sir gusse mein andha ho jaata hai\n\nYa woh jo bheetar jalta hai.. tum se.. sab se\nYa phir woh jo lapakta hai... lalchata hai ... har chamakti cheez par\nMaine sab dekhe hain... aur sab abhi zinda hain\nNahin jaanta mera dussehra kab aayega",
     contentEn: "I am Ravan...\n\nAll ten heads of Dashanan are within me\nAnd they emerge now and then\nYou might have seen it sometime\nThe head that becomes blind with rage\n\nOr that which burns within... at you... at everyone\nOr the one that pounces... that covets... every shiny thing\nI have seen them all... and all are still alive\nI do not know when my Dussehra will come",
     artworkTheme: "ravan",
+    meaning: "A dark, introspective piece where the poet recognizes the many destructive facets of their own ego and anger, wondering when they will finally conquer their inner demons.",
     glossary: [
       { word: "दशानन", roman: "Dashanan", meaning: "Ten-headed (Another name for Ravana)" }
     ]
@@ -657,6 +676,7 @@ const INITIAL_POEMS = [
     contentTrans: "Tera tassavvur hai, tanhai hai aur kuchh bhi nahin hai\nMehki-mehki si hawa hai - aur kuchh bhi nahin hai\n\nChand boondein hain jo baadalon se toot ke bikhri hain idhar\nThehre hue paani mein tera aks hai - aur kuchh bhi nahin hai\n\nBand aankhon ke pare tere tassavvur ki duniya hai bas\nNa koi dard na khushi - aaj aur kuchh bhi nahin hai",
     contentEn: "Your imagination is here, loneliness is here, and nothing else\nThe breeze is fragrant - and nothing else\n\nThere are a few drops that broke from the clouds and scattered here\nYour reflection is in the still water - and nothing else\n\nBeyond closed eyes is just the world of your imagination\nNeither any pain nor joy - today there is nothing else",
     artworkTheme: "lake",
+    meaning: "Paints a serene but lonely landscape where only the imagination of the beloved exists—a state of pure trance devoid of both joy and pain.",
     glossary: [
       { word: "तस्सव्वुर", roman: "Tassavvur", meaning: "Imagination / Thought" },
       { word: "तन्हाई", roman: "Tanhai", meaning: "Loneliness / Solitude" },
@@ -671,6 +691,7 @@ const INITIAL_POEMS = [
     contentTrans: "Ek pal, ek lamha\nEk gham, ek dard,\n\nZindagi jis mein sama jaaye\nDil jis mein lahoo ho jaaye\n\nEk chaah, ek nazar - rooh tak jis mein doob jaaye\n\nYeh khayal main bahut peechhe chhod aaya hoon\nAaj is mod par, chhoti umeedein laya hoon\n\nBoond-boond chaah,\nJhuki-jhuki nigah\n\nThoda-thoda gham,\nKatra-katra dard\n\nMaddham - maddham,\n\nZara-zara,\nLamha lamha\nZindagi",
     contentEn: "One moment, one instant\nOne sorrow, one pain,\n\nIn which life is contained\nIn which the heart becomes blood\n\nOne desire, one look - in which the soul drowns\n\nI have left these thoughts far behind\nToday at this turn, I have brought small hopes\n\nDrop by drop desire,\nLowered gaze\n\nLittle by little sorrow,\nDrop by drop pain\n\nFaint - faint,\n\nA little bit,\nMoment by moment\nLife",
     artworkTheme: "umbrella",
+    meaning: "A transition from grand expectations to appreciating the quiet, incremental moments of life, finding existence in the subtle, drop-by-drop experiences of sorrow and desire.",
     glossary: [
       { word: "लम्हा", roman: "Lamha", meaning: "Moment / Instant" },
       { word: "रूह", roman: "Rooh", meaning: "Soul" },
@@ -686,6 +707,7 @@ const INITIAL_POEMS = [
     contentTrans: "Main chhata liye, bachta phira, sookha raha\n\nMere charon taraf zindagi,\nBarasti rahi,\nBarasti rahi\n\nMain oak se, peene ki koshish karta raha\n\nMere hathon se woh,\nChhalakti rahi,\nChhalakti hi rahi",
     contentEn: "Holding an umbrella, I kept dodging, remained dry\n\nAll around me, Life\nKept raining\nKept raining\n\nI tried to drink it with cupped hands\n\nBut from my hands, it\nKept spilling\nKept spilling over",
     artworkTheme: "umbrella",
+    meaning: "A poignant metaphor of a person holding an umbrella to avoid the rain of life, only to find that when they finally try to drink from it, it slips endlessly through their fingers.",
     glossary: [
       { word: "ओक", roman: "Oak", meaning: "Cupped hands (to drink water)" }
     ]
@@ -698,6 +720,7 @@ const INITIAL_POEMS = [
     contentTrans: "Phir nayi subah aayi aur phir naya jaal buna maine\nChandni ka, khushboo ka\n\nTere saath phir nayi shaam ka khayal buna maine\n\nPhir koi bekaar si uljhan, naya janjaal chuna maine\nRishton ki, rozgaar ki\n\nSab ki suni, phir bechare dil ka na haal suna maine",
     contentEn: "Then a new morning came and I wove a new web again\nOf moonlight, of fragrance\n\nI wove the thought of a new evening with you again\n\nThen I chose some useless tangle, a new trap again\nOf relationships, of employment\n\nI listened to everyone, but didn't listen to the state of the poor heart",
     artworkTheme: "tangle",
+    meaning: "Reflects the daily cycle of weaving beautiful dreams of love, only to inevitably get caught up in the mundane, practical tangles of worldly relationships and survival.",
     glossary: [
       { word: "जंजाल", roman: "Janjaal", meaning: "Entanglement / Trap" }
     ]
@@ -710,6 +733,7 @@ const INITIAL_POEMS = [
     contentTrans: "Tumhein kya pata muskurane se pehle\nDard kitne dil ke dabane hain padte\n\nKahkaha zor se yoon lagane se pehle\nAshq aankhon ke kitne chhupane hain padte\n\nYe main jaanta hoon gham-e-zindagi mein\nLamhe khushiyon ke kaise churane hain padte\n\nKe is ek pal ki hansi ke liye\nHazaar gham bhi kabhi bhool jaane hain padte",
     contentEn: "What do you know, before smiling\nHow many pains of the heart must be suppressed\n\nBefore bursting into loud laughter like this\nHow many tears of the eyes must be hidden\n\nI know this, in the sorrow of life\nHow moments of happiness must be stolen\n\nThat for this one moment's smile\nSometimes a thousand sorrows must be forgotten",
     artworkTheme: "barren",
+    meaning: "Reveals the hidden cost of joy, highlighting how many deep sorrows and tears must be buried to produce a single moment of genuine laughter.",
     glossary: [
       { word: "कहकहा", roman: "Kahkaha", meaning: "Loud laughter" },
       { word: "अश्क़", roman: "Ashq", meaning: "Tears" },
@@ -724,6 +748,7 @@ const INITIAL_POEMS = [
     contentTrans: "Baanti badhai har roz gairon ko is baras\nJam ke muskuraya har mehfil mein is baras\n\nBhare sabke jaam ban ke saaqi bhi is baras\nTha rakeeb ki dawat mein shamil bhi is baras\n\nPhoolon ka saath tha, kahan khushboo thi is baras?\nTu kareeb tha, tanhai ki justajoo bhi is baras\n\nBaras baras ke thak gayi barsaat is baras\nTaras taras ke so gayi ik pyaas is baras\n\nKhaali tha ajnabi tha, ye baras ajeeb sa\nJyon guzra ho kisi aur pe ye baras ajeeb sa",
     contentEn: "Distributed congratulations every day to strangers this year\nSmiled heartily in every gathering this year\n\nFilled everyone's cups becoming the cupbearer too this year\nWas included in the rival's feast too this year\n\nThere was the company of flowers, but where was the fragrance this year?\nYou were close, yet there was the quest for loneliness this year\n\nThe rain got tired of raining this year\nA thirst fell asleep yearning this year\n\nIt was empty, it was a stranger, this strange year\nAs if this strange year passed upon someone else",
     artworkTheme: "lake",
+    meaning: "A look back at a strange, hollow year where outward celebrations masked an inner emptiness and a profound sense of isolation despite being surrounded by others.",
     glossary: [
       { word: "साकी", roman: "Saaqi", meaning: "Cupbearer / One who serves wine" },
       { word: "रकीब", roman: "Rakeeb", meaning: "Rival / Competitor" },
@@ -738,6 +763,7 @@ const INITIAL_POEMS = [
     contentTrans: "Zaroorat kisi masiha ki\nAaj kuchh zaroorat se zyada hai\nZallalatein kam nahin thi pehle bhi\nAaj hadh aur kuchh zyada hai\n\nIsse pehle bhi dil roya tha\nAaj dard aur kuchh zyada hai\nInsaniyat pehle bhi hui sharminda\nAaj sharm pehle se kuchh zyada hai\n\nAb ke rukna nahin na jhukna hai\nDil mein kuchh aag bhi zyada hai\nSambhal kar khelna baazi ae dost\nDaav aaj aur kuchh zyada hai",
     contentEn: "The need for a messiah\nIs somewhat more than necessary today\nHumiliations were not less before either\nToday the limit is somewhat more\n\nThe heart had cried before this too\nToday the pain is somewhat more\nHumanity was ashamed before too\nToday the shame is somewhat more than before\n\nThis time there is no stopping nor bowing\nThere is also somewhat more fire in the heart\nPlay the game carefully, my friend\nThe stakes today are somewhat more",
     artworkTheme: "ravan",
+    meaning: "A socially conscious poem lamenting the extreme heights of modern suffering, humiliation, and loss of humanity, calling for resolute action in the face of rising stakes.",
     glossary: [
       { word: "मसीहा", roman: "Masiha", meaning: "Messiah / Savior" },
       { word: "जलालते", roman: "Zallalatein", meaning: "Humiliations / Disgraces" }
@@ -751,6 +777,7 @@ const INITIAL_POEMS = [
     contentTrans: "Yoon nikalte hain dilli mein kuchh log is tarah\nAadamkhor jyon raaton pe chalein hon shikaar par\nRoz Ghalib ki ye galiyan roti hain raat bhar\nIsmat ke masoom phool, insaaf ke mazar par\n\n*December 2012 ke jan aandolan ke dauran",
     contentEn: "Some people set out in Delhi in such a way\nAs if man-eaters walk the nights on a hunt\nEvery day these streets of Ghalib weep all night\nOn the shrine of justice, the innocent flowers of honor\n\n*During the December 2012 mass protests",
     artworkTheme: "city",
+    meaning: "A sharp, agonizing critique of the December 2012 tragedy in Delhi, portraying the city's streets mourning the loss of innocence to predatory violence.",
     glossary: [
       { word: "आदमखोर", roman: "Aadamkhor", meaning: "Man-eater" },
       { word: "इस्मत", roman: "Ismat", meaning: "Honor / Chastity" },
@@ -765,6 +792,7 @@ const INITIAL_POEMS = [
     contentTrans: "Toofan se koi keh de\nThoda aur thehar jaaye\n\nRaas aata nahin mujhko\nSukoon jo sabko pyara hai\nRaah sabne chuni hai jo\nNahin mujhko gawara hai\n\nUfanti lehron ke seene pe\nBehakti mast hawaon mein\nDhaar manjhdhaar ke bheetar\nGhane ubalte andheron mein\n\nJhoom kar raqs karne ki\nKhwahish ab bhi baaki hai\nIshq mein phir se marne ki\nKhwahish ab bhi baaki hai\n\nToofan se koi keh de - thoda aur thehar jaaye",
     contentEn: "Let someone tell the storm\nTo pause a little longer\n\nThe peace that is dear to everyone\nDoes not suit me\nThe path that everyone has chosen\nIs not acceptable to me\n\nOn the chest of surging waves\nIn the intoxicating wandering winds\nWithin the midstream of the current\nIn thick boiling darknesses\n\nThe desire to dance swaying\nIs still remaining\nThe desire to die in love again\nIs still remaining\n\nLet someone tell the storm - to pause a little longer",
     artworkTheme: "lake",
+    meaning: "A rebellious declaration of a restless spirit that rejects conventional peace, instead finding its true passion and desire to love in the heart of raging storms.",
     glossary: [
       { word: "रास", roman: "Raas", meaning: "Suit / Agreeable" },
       { word: "गंवारा", roman: "Gawara", meaning: "Acceptable / Tolerable" },
@@ -779,6 +807,7 @@ const INITIAL_POEMS = [
     contentTrans: "Shauq ye laazmi toh hai lekin\nKismat walon ko naseeb hota hai\nZindagi ko nazm ki tarah gaaye\nWoh deewangi ke kareeb hota hai\n\nJurm ho ya ho shauq-e-bekaar\nShayari bas meri majboori hai\nIlaaj-e-dard-e-duniya ke liye\nYe rahat bahut zaroori hai",
     contentEn: "This hobby is inevitable but\nIt is destined only for the lucky ones\nHe who sings life like a poem\nIs close to madness\n\nWhether it's a crime or a useless hobby\nPoetry is simply my compulsion\nAs a cure for the pain of the world\nThis relief is very necessary",
     artworkTheme: "tomb",
+    meaning: "Defines poetry not just as a hobby, but as a divine madness and a necessary compulsion to heal the overwhelming pain of existence.",
     glossary: [
       { word: "लाज़मी", roman: "Laazmi", meaning: "Inevitable / Necessary" },
       { word: "नज़्म", roman: "Nazm", meaning: "Poem" },
@@ -794,6 +823,7 @@ const INITIAL_POEMS = [
     contentTrans: "Ae dil aaj teri ye haalat hai kya\nKyun hai toota hua - itna dooba hua\nJaise khat koi umeedon se bhara\nMasal kar farsh par hai phenka hua",
     contentEn: "Oh heart, what is this condition of yours today\nWhy are you so broken - so drowned\nLike some letter filled with hopes\nCrushed and thrown upon the floor",
     artworkTheme: "barren",
+    meaning: "A stark visual metaphor comparing the deeply broken and despondent state of the heart to a crushed letter full of discarded hopes thrown onto the floor.",
     glossary: [
       { word: "खत", roman: "Khat", meaning: "Letter" }
     ]
@@ -806,6 +836,7 @@ const INITIAL_POEMS = [
     contentTrans: "Ye shahad se meethi shaam\nPal pal, tham tham\nTapki tap tap\n\nShab shab shabnam\n\nChup chup nazrein\nGup chup baatein\nDham dham dhadkan\n\nJalti jalti\n\nSulgi sulgi\n\nBehki behki\n\nMehki mehki\n\nMadhur madhur\n\nResham resham\n\nAakhri mulaqat ki\nTark-e-talluqaat ki\n\nKoi karamaat ki\n\nKaise bhoole koi\nKaise jee le koi\nRaat roko koi\n\nJaan nikalne ko hai\nSaans rukne ko hai\nAb guzarne ko hai\n\nYe shahad se meethi shaam",
     contentEn: "This honey-sweet evening\nMoment by moment, pausing\nDripping drop by drop\n\nDew, dew, every night\n\nSilent, silent glances\nSecret, secret talks\nThump, thump heartbeat\n\nBurning, burning\n\nSmoldering, smoldering\n\nWandering, wandering\n\nFragrant, fragrant\n\nSweet, sweet\n\nSilken, silken\n\nOf the last meeting\nOf breaking off relations\n\nOf some miracle\n\nHow can anyone forget\nHow can anyone live\nLet someone stop the night\n\nLife is about to leave\nBreath is about to stop\nNow it is about to pass\n\nThis honey-sweet evening",
     artworkTheme: "lake",
+    meaning: "Captures the intoxicating, bittersweet tension of a final meeting—a sweet, dew-soaked evening where silent glances carry the weight of an impending, heartbreaking separation.",
     glossary: [
       { word: "शबनम", roman: "Shabnam", meaning: "Dew" },
       { word: "तर्क-ए-ताल्लुकात", roman: "Tark-e-talluqaat", meaning: "Breaking off relations" },
@@ -820,6 +851,7 @@ const INITIAL_POEMS = [
     contentTrans: "Usne kaha tha\nYe ilzaam nahin hai\nPhir kyun main sharminda hoon\n\nUsne kaha tha\nYe shikwa nahin hai\nPhir kyun main pareshaan hoon\n\nJo usne nahin kaha hai\nWahi kaha hai aksar usne",
     contentEn: "She had said\nThis is not an accusation\nThen why am I ashamed\n\nShe had said\nThis is not a complaint\nThen why am I troubled\n\nWhat she has not said\nThat is what she has often said",
     artworkTheme: "tangle",
+    meaning: "Explores the painful contradiction between what is spoken and what is felt, where the absence of direct accusation still leaves the poet drowning in guilt.",
     glossary: [
       { word: "इलज़ाम", roman: "Ilzaam", meaning: "Accusation / Blame" },
       { word: "शिकवा", roman: "Shikwa", meaning: "Complaint" }
@@ -833,6 +865,7 @@ const INITIAL_POEMS = [
     contentTrans: "Wo shahad se meethi shaam ...\nWo ras barsaati bheegi si hawa\nWaqt thirak raha tha lehron sa\nBikhra tha wahan gehra sa nasha\n\nMadhosh tha dil behosh tha main\nTab jeena marna kuchh bhi na tha\nPhir palkon ko utha kar tumne kaha\nDekho.. lets not complicate things .....",
     contentEn: "That honey-sweet evening...\nThat moist breeze raining nectar\nTime was dancing like the waves\nA deep intoxication was scattered there\n\nThe heart was intoxicated, I was senseless\nThen living and dying meant nothing\nThen lifting your eyelashes you said\nLook.. let's not complicate things.....",
     artworkTheme: "lake",
+    meaning: "A vivid memory of a deeply romantic, intoxicated moment that is suddenly and pragmatically deflated by the partner's plea to not 'complicate things'.",
     glossary: [
       { word: "मदहोश", roman: "Madhosh", meaning: "Intoxicated / Inebriated" }
     ]
@@ -845,6 +878,7 @@ const INITIAL_POEMS = [
     contentTrans: "Wafa ki umeed bewafai ka gila jaane do\nKya doston se kya dushmanon se mila jaane do\nKhud apni harkaton ka hai ahsaas mujhe\nKya diya kis ko wafaon ka sila- jaane do",
     contentEn: "The hope for loyalty, the complaint of betrayal, let it go\nWhat I got from friends, what from enemies, let it go\nI myself am aware of my own actions\nWhat reward for loyalty I gave to whom - let it go",
     artworkTheme: "tomb",
+    meaning: "A weary but peaceful dismissal of worldly betrayals and transactional loyalties, choosing to let go of grievances from both friends and foes alike.",
     glossary: [
       { word: "वफ़ा", roman: "Wafa", meaning: "Loyalty / Faithfulness" },
       { word: "बेवफाई", roman: "Bewafai", meaning: "Betrayal / Faithlessness" },
@@ -860,6 +894,7 @@ const INITIAL_POEMS = [
     contentTrans: "Jab se munh mein zuban aayi hai\nAur aankhon ne roshni paayi hai\nDil mein ahsaas sa koi jaaga\nTab se kehne ko kuchh machalta hai\nAur ye dil nahin sambhalta hai\n\nNa dastak nahin hai duniya ki\nNa naya daur ya zamana hai\nTum ne shayad nahin tawajjoh di\nWarna mujrim toh ye purana hai",
     contentEn: "Ever since the tongue has come to the mouth\nAnd the eyes have found light\nSome feeling awoke in the heart\nSince then something yearns to be said\nAnd this heart cannot be controlled\n\nIt is neither a knock from the world\nNor a new era or age\nPerhaps you did not pay attention\nOtherwise this culprit is an old one",
     artworkTheme: "barren",
+    meaning: "Recognizes that the sudden urge to speak out and express the heart's newly awakened feelings is not due to an external change, but the poet's own inherent, long-standing nature.",
     glossary: [
       { word: "तवज्जोह", roman: "Tawajjoh", meaning: "Attention" },
       { word: "मुजरिम", roman: "Mujrim", meaning: "Culprit / Criminal" }
@@ -873,6 +908,7 @@ const INITIAL_POEMS = [
     contentTrans: "Dard-dastak dar-o-deewar se aati hai\nDil-e-bebas se fariyaad si aati hai\nYaad ki ek boond rula jaati hai humein\nAur teri yaadon ki barsaat si aati hai",
     contentEn: "The knock of pain comes from the doors and walls\nA plea comes from the helpless heart\nA single drop of memory makes us cry\nAnd then a rain of your memories comes",
     artworkTheme: "lake",
+    meaning: "A deeply evocative short poem where the physical environment itself seems to echo the heart's pain, and a single tear brings forth a deluge of cherished memories.",
     glossary: [
       { word: "दर्द-दस्तक", roman: "Dard-dastak", meaning: "Knock of pain" },
       { word: "दिले-बेबस", roman: "Dil-e-bebas", meaning: "Helpless heart" },
@@ -887,6 +923,7 @@ const INITIAL_POEMS = [
     contentTrans: "Phir wahi mod nazar aata hai -\nZindagi gol hai zameen ki tarah\nAur bhi mod hain us mod ke paar\n\nManzilein raah takti hain kai\nChahtein talashti hain kai\nChaand kuchh aur haseen hai shayad\nMausam aur bhi rangeen hai shayad\nAur bhi rahatein hain us mod ke paar\n\nMud hi jaunga is baar\nPehle bhi yahi socha tha\nRoke na rukoonga is baar\nPehle bhi yahi socha tha\n\nZulfein, daaman, rishte, maazi\nChhod ke sab ko badh jaunga\nHaan- pehle bhi yahi socha tha\n\nPhir wahi mod nazar aata hai\nWahi dil ki haalat hai phir se\nZulf lehrane lagi hai phir se\nRokti hai kashish rishton ki\n\nKoi awaaz kheenchti hai phir se\nRuk jaoon, guzar jaoon ya mud jaoon\nSawaal aan khada hai phir se\nGhoomta hai khayal dil mein phir se\nZindagi gol hai zameen ki tarah",
     contentEn: "Then that same turn comes into view -\nLife is round like the earth\nThere are more turns beyond that turn\n\nMany destinations watch the path\nMany desires are searching\nThe moon is perhaps a bit more beautiful\nThe weather is perhaps a bit more colorful\nThere are more comforts beyond that turn\n\nI will definitely turn this time\nI had thought this before too\nI won't stop even if stopped this time\nI had thought this before too\n\nTresses, embraces, relationships, the past\nLeaving everyone behind I will move forward\nYes- I had thought this before too\n\nThen that same turn comes into view\nThat same condition of the heart is back again\nThe tresses have started swaying again\nThe pull of relationships stops me\n\nSome voice pulls me again\nShould I stop, pass by, or turn\nThe question stands before me again\nThe thought spins in the heart again\nLife is round like the earth",
     artworkTheme: "tangle",
+    meaning: "Describes the cyclical nature of life's journey; despite past resolves to move forward and leave attachments behind, the poet inevitably finds themselves pulled back by the familiar tug of relationships.",
     glossary: [
       { word: "माज़ी", roman: "Maazi", meaning: "Past" },
       { word: "कशिश", roman: "Kashish", meaning: "Pull / Attraction" }
@@ -933,9 +970,6 @@ const App = () => {
   
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState('');
-
-  const [poemAnalysis, setPoemAnalysis] = useState(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -1363,7 +1397,6 @@ const App = () => {
     setLanguageMode('hi');
     setMicError(null);
     setSuccessMsg(null);
-    setPoemAnalysis(null);
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
   };
 
@@ -1559,52 +1592,6 @@ const App = () => {
       setTimeout(() => setMicError(null), 3000);
     } finally {
       setIsDownloading(false);
-    }
-  };
-
-  const analyzePoem = async () => {
-    const currentPoem = allPoems.find(p => p.stableId === selectedPoemId);
-    if (poemAnalysis || !currentPoem) return; 
-    setIsAnalyzing(true);
-    setMicError(null);
-
-    try {
-      const apiKey = GEMINI_API_KEY || "";
-      const modelName = GEMINI_API_KEY ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-      const systemPrompt = "You are a deeply empathetic literary critic and poet. Your task is to analyze the given Hindi poem. Provide a beautiful, 2-3 paragraph explanation of its core meaning, emotional depth, and underlying metaphors. Speak directly to the reader in a warm, insightful tone in English. Keep it concise but profound.";
-      const userQuery = `Title: ${currentPoem.title}\n\nContent:\n${currentPoem.content}`;
-
-      const payload = {
-        contents: [{ parts: [{ text: userQuery }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] }
-      };
-
-      const delays = [1000, 2000, 4000, 8000, 16000];
-      let data;
-      for (let i = 0; i <= 5; i++) {
-        try {
-          const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          data = await response.json();
-          break;
-        } catch (error) {
-          if (i === 5) throw error;
-          await new Promise(resolve => setTimeout(resolve, delays[i]));
-        }
-      }
-
-      const textData = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (textData) {
-        setPoemAnalysis(textData);
-      }
-    } catch (err) {
-      console.error(err);
-      setMicError("Failed to analyze the poem. Please try again.");
-      setTimeout(() => setMicError(null), 3000);
-    } finally {
-      setIsAnalyzing(false);
     }
   };
 
@@ -1955,14 +1942,6 @@ const App = () => {
                       </div>
                       <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">English</span>
                     </button>
-                    
-                    {/* Discover Meaning */}
-                    <button onClick={analyzePoem} disabled={isAnalyzing} className="flex flex-col items-center group gap-1.5 disabled:opacity-50" title="✨ Discover Meaning">
-                      <div className={`transition-all flex items-center justify-center h-8 ${poemAnalysis ? 'text-indigo-600 scale-110' : 'text-slate-300 group-hover:text-indigo-400'}`}>
-                        {isAnalyzing ? <Loader2 className="animate-spin" size={22} /> : <Sparkles size={22} />}
-                      </div>
-                      <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Meaning</span>
-                    </button>
                 </div>
 
                 <h2 className={`font-bold mb-4 tracking-tight text-red-600 dark:text-red-400 leading-tight drop-shadow-sm transition-all duration-300 ${languageMode === 'en' ? 'text-2xl lg:text-4xl font-sans italic' : languageMode === 'ro' ? 'text-2xl lg:text-4xl font-sans font-semibold text-red-700 dark:text-red-300' : 'text-3xl lg:text-5xl font-hindi'}`}>
@@ -2033,22 +2012,21 @@ const App = () => {
                 {displayContent}
             </div>
             
-            {/* Poem Analysis Layer */}
-            {poemAnalysis && (
-              <div className="mt-12 p-6 md:p-8 bg-indigo-50/80 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-3xl animate-in fade-in slide-in-from-top-4 text-left shadow-sm relative">
-                <button onClick={() => setPoemAnalysis(null)} className="absolute top-5 right-5 text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"><X size={20} /></button>
-                <h3 className="text-sm font-bold text-indigo-800 dark:text-indigo-300 mb-4 flex items-center gap-2 uppercase tracking-widest">
+            {/* Poem Static Analysis/Meaning Layer */}
+            {currentPoem.meaning && (
+              <div className="mt-12 p-6 md:p-8 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20 rounded-3xl text-left relative z-20">
+                <h3 className="text-sm font-bold text-indigo-800/70 dark:text-indigo-300/70 mb-4 flex items-center gap-2 uppercase tracking-widest">
                   <Sparkles size={18} /> Heart of the Poem
                 </h3>
-                <div className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap font-sans italic">
-                  {poemAnalysis}
+                <div className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed font-sans italic">
+                  {currentPoem.meaning}
                 </div>
               </div>
             )}
 
             {/* Poem Static Glossary Layer */}
             {currentPoem.glossary && currentPoem.glossary.length > 0 && (
-              <div className="mt-12 p-6 md:p-8 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/20 rounded-3xl text-left relative z-20">
+              <div className="mt-8 p-6 md:p-8 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/20 rounded-3xl text-left relative z-20">
                 <h3 className="text-sm font-bold text-amber-800/70 dark:text-amber-300/70 mb-4 flex items-center gap-2 uppercase tracking-widest">
                   <BookText size={18} /> Glossary
                 </h3>
